@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html,
+body,
+#root {
+  height: 100%;
+}
+ 
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+ 
+/* Hides scrollbar for horizontally-scrollable chip rows while keeping
+   the element scrollable via touch/drag. */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+ 
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+ 
