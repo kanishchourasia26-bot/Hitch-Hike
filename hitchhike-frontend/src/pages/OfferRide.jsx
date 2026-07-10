@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bike } from 'lucide-react';
 import { io } from 'socket.io-client';
-import api from '../services/api_service'; // API import karna zaroori hai
+import api from '../services/api_service';
 import MapComponent from '../components/MapComponent';
 
 const socket = io("http://localhost:5000");
 
-// Toggle Component (Same as yours)
+// Toggle Component
 const Toggle = ({ checked, onChange, label }) => (
   <button
     type="button"
@@ -26,7 +26,7 @@ const OfferRide = () => {
   // Form States
   const [vehicleName, setVehicleName] = useState('');
   const [departureTime, setDepartureTime] = useState('');
-  const [fare, setFare] = useState(''); // Naya State Fare ke liye
+  const [fare, setFare] = useState(''); 
   const [hasHelmet, setHasHelmet] = useState(true);
   const [womenOnly, setWomenOnly] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ const OfferRide = () => {
     );
   };
 
-  // Publish API Call
+  // Publish API Call with Route Calculation 🚀
   const handlePublish = async () => {
     if (!pickup || !drop || !fare || !departureTime) {
       alert("Please fill all details and select pickup/drop on the map!");
@@ -58,11 +58,28 @@ const OfferRide = () => {
 
     setLoading(true);
     try {
+      // 1. OSRM (Free Routing API) se exact road ka rasta nikalo
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}?geometries=geojson`;
+      const routeRes = await fetch(osrmUrl);
+      const routeData = await routeRes.json();
+
+      if (!routeData.routes || routeData.routes.length === 0) {
+        alert("Could not find a valid road route between these points. Please adjust locations.");
+        setLoading(false);
+        return;
+      }
+
+      // Ye humein seedha [[lng, lat], [lng, lat], ...] ka array de dega
+      const routePoints = routeData.routes[0].geometry.coordinates;
+      const expectedDistanceKm = (routeData.routes[0].distance / 1000).toFixed(1); // API distance meters mein deti hai
+
+      // 2. Ab Backend par Data bhejo
       const response = await api.post('/rides', {
         startPoint: { coordinates: [pickup.lng, pickup.lat], address: "Pickup Location" },
         endPoint: { coordinates: [drop.lng, drop.lat], address: "Drop Location" },
+        routePoints: routePoints, // NAYA LOGIC: Blue line ka data chala gaya!
         farePerKm: Number(fare),
-        expectedDistance: 10, // Abhi dummy 10km rakha hai, baad me map routing se nikal sakte ho
+        expectedDistance: Number(expectedDistanceKm), // Exact road distance
         startTime: departureTime,
       });
 

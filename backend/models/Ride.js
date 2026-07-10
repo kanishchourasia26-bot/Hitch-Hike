@@ -42,11 +42,22 @@ const rideSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    status: {
-      type: String,
-      enum: ['published', 'booked', 'active', 'completed', 'cancelled'],
-      default: 'published',
-    },
+   // Purana status field:
+  status: {
+    type: String,
+    enum: ['published', 'booked', 'active', 'completed', 'cancelled'],
+    default: 'published',
+  },
+  // NAYA LOGIC: Rating aur Review add karo
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5
+  },
+  review: {
+    type: String,
+    trim: true
+  },
     startPoint: {
       type: pointSchema,
       required: true,
@@ -74,6 +85,18 @@ const rideSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+   
+routePath: {
+  type: {
+    type: String,
+    enum: ['LineString'],
+    default: 'LineString'
+  },
+  coordinates: {
+    type: [[Number]], 
+    required: true
+  }
+},
   },
   {
     timestamps: true,
@@ -83,5 +106,5 @@ const rideSchema = new mongoose.Schema(
 // Critical: 2dsphere indexes to enable future radius-based ($near / $geoWithin) searching
 rideSchema.index({ startPoint: '2dsphere' });
 rideSchema.index({ endPoint: '2dsphere' });
-
+rideSchema.index({ routePath: '2dsphere' }); // LineString par spatial index lagaya
 module.exports = mongoose.model('Ride', rideSchema);

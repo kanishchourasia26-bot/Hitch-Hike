@@ -1,61 +1,64 @@
-require('dotenv').config();
 const express = require('express');
+const dotenv = require('dotenv');
 const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
 const connectDB = require('./config/db');
-
-// Route modules
 const userRoutes = require('./routes/userRoutes');
 const rideRoutes = require('./routes/rideRoutes');
-const bookingRoutes = require('./routes/bookingRoutes');
+
+// NAYA LOGIC: Socket.io ke imports
+const http = require('http');
+const { Server } = require('socket.io');
+
+dotenv.config();
+connectDB();
 
 const app = express();
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-    cors: { origin: "*" }
+app.use(express.json());
+app.use(cors());
+
+// NAYA LOGIC: HTTP server banaya aur Socket.io initialize kiya
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Abhi ke liye sab allow kar rahe hain (testing ke liye)
+    methods: ["GET", "POST", "PUT"]
+  }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Socket Logic
+// NAYA LOGIC: Socket connection check karna
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+  console.log('⚡ A user connected via Socket:', socket.id);
 
-    socket.on('join-ride', (rideId) => {
-        socket.join(rideId);
-        console.log(`User joined ride room: ${rideId}`);
-    });
+  // NAYA LOGIC: Socket connection check karna
+io.on('connection', (socket) => {
+  console.log('⚡ A user connected via Socket:', socket.id);
 
-    socket.on('update-location', (data) => {
-        socket.to(data.rideId).emit('location-update', {
-            lat: data.lat,
-            lng: data.lng
-        });
-    });
+  // 👇 YAHAN SE NAYA CODE ADD KARO 👇
+  // Jab driver apni location bheje, toh use baaki sab (passenger) ko forward kar do
+  socket.on('send-location', (data) => {
+    // data mein aayega: { rideId, lat, lng }
+    console.log(`📍 Location received for ride ${data.rideId}:`, data.lat, data.lng);
+    
+    // Broadcast location to passenger
+    socket.broadcast.emit('receive-location', data);
+  });
+  // 👆 YAHAN TAK 👆
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
+  // Jab user disconnect ho
+  socket.on('disconnect', () => {
+    console.log('❌ User disconnected:', socket.id);
+  });
+});
+
 });
 
 // Routes
-app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.use('/api/users', userRoutes);
 app.use('/api/rides', rideRoutes);
-app.use('/api/bookings', bookingRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
-    await connectDB();
-    httpServer.listen(PORT, () => {
-        console.log(`🚀 Hitchhike backend & Socket.io running on port ${PORT}`);
-    });
-};
-
-startServer();
-
-module.exports = app;
+// IMPORTANT: Ab 'app.listen' ki jagah 'server.listen' use hoga
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

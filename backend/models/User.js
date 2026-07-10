@@ -31,25 +31,30 @@ const userSchema = new mongoose.Schema(
       },
       required: true,
     },
-    isAadhaarVerified: {
-      type: Boolean,
-      default: false,
-    },
-    isDLVerified: {
-      type: Boolean,
-      default: false,
-    },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+    default: null
+  },
+  isAadhaarVerified: {
+    type: Boolean,
+    default: false
+  },
+  isDlVerified: {
+    type: Boolean,
+    default: false
+  },
     reliabilityScore: {
       type: Number,
       default: 100,
       min: 0,
       max: 100,
     },
-    walletBalance: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+  // Purani fields ke neeche add karo:
+  walletBalance: {
+    type: Number,
+    default: 500 // As a joining bonus, har naye user ko 500 Rs milenge (Testing ke liye)
+  },
   },
   {
     timestamps: true,

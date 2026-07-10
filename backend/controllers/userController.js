@@ -155,8 +155,58 @@ const getMe = async (req, res) => {
   return res.status(200).json(req.user);
 };
 
+/**
+ * @route   POST /api/users/verify
+ * @desc    Verify Aadhaar or Driving License
+ * @access  Private
+ */
+const verifyDocuments = async (req, res) => {
+  try {
+    const { aadhaarNumber, dlNumber, gender } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Agar Aadhaar number aaya hai
+    if (aadhaarNumber) {
+      // Asli app mein yahan OTP/API logic lagta hai. Hum direct true kar rahe hain.
+      user.isAadhaarVerified = true;
+      if (gender) {
+        user.gender = gender; // Gender Aadhaar se nikal liya (mock)
+      }
+    }
+
+    // Agar DL number aaya hai
+    if (dlNumber) {
+      user.isDlVerified = true;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'Verification successful!',
+      user: {
+        id: user._id,
+        name: user.name,
+        isAadhaarVerified: user.isAadhaarVerified,
+        isDlVerified: user.isDlVerified,
+        gender: user.gender
+      }
+    });
+  } catch (error) {
+    console.error(`verifyDocuments error: ${error.message}`);
+    res.status(500).json({ message: 'Server error during verification' });
+  }
+};
+
+// Exports mein isko add karna mat bhoolna!
+// module.exports = { registerUser, authUser, getUserProfile, verifyDocuments };
 module.exports = {
   registerUser,
   loginUser,
   getMe,
+  verifyDocuments
 };

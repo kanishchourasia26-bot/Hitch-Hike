@@ -1,14 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, MapPin, Calendar, Clock, User, CheckCircle, XCircle, Play } from 'lucide-react';
+import { Loader2, MapPin, Calendar, Clock, User, CheckCircle, XCircle, Play, Star } from 'lucide-react';
 import api from '../services/api_service';
+import { io } from 'socket.io-client';
+import LiveTracking from '../components/LiveTracking';
 
 const MyRides = () => {
   const [activeTab, setActiveTab] = useState('booked');
   const [rides, setRides] = useState({ offered: [], booked: [] });
   const [loading, setLoading] = useState(true);
+  
+  // Rating modal ke states
+  const [ratingModal, setRatingModal] = useState({ isOpen: false, rideId: null });
+  const [ratingData, setRatingData] = useState({ rating: 0, review: '' });
 
+  // 1. Fetch Rides (Pehla useEffect)
   useEffect(() => {
     fetchMyRides();
+  }, []);
+
+  // 2. Socket.io Connection (Doosra useEffect)
+  useEffect(() => {
+    const socket = io('http://localhost:5000'); // Apna backend ka port check kar lena (jaise 5000)
+
+    socket.on('connect', () => {
+      console.log('🟢 LIVE: Connected to backend via Socket.io! My ID:', socket.id);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔴 LIVE: Disconnected from server');
+    });
+
+    // Cleanup jab page band ho
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const fetchMyRides = async () => {
@@ -32,11 +57,40 @@ const MyRides = () => {
 
     try {
       await api.put(`/rides/${rideId}/status`, { status: newStatus });
-      alert(`Ride ${newStatus} successfully!`);
-      fetchMyRides();
+      
+      // UI turant update karne ke liye
+      setRides(prev => ({
+        ...prev,
+        offered: prev.offered.map(r => r._id === rideId ? { ...r, status: newStatus } : r),
+        booked: prev.booked.map(r => r._id === rideId ? { ...r, status: newStatus } : r)
+      }));
+      
+      alert(`Ride marked as ${newStatus}!`);
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.message || "Failed to update ride status");
+    }
+  };
+
+  // Rating submit karne ka function
+  const handleSubmitRating = async () => {
+    if (ratingData.rating === 0) {
+      return alert("Please select a star rating!");
+    }
+    
+    try {
+      await api.post(`/rides/${ratingModal.rideId}/rate`, ratingData);
+      alert("Thank you for your feedback!");
+      
+      // Modal band karo aur data reset karo
+      setRatingModal({ isOpen: false, rideId: null });
+      setRatingData({ rating: 0, review: '' });
+      
+      // List refresh karo taaki rating dikhne lage
+      fetchMyRides();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to submit rating");
     }
   };
 
@@ -54,7 +108,7 @@ const MyRides = () => {
     const isDriver = type === 'offered'; 
     
     return (
-      <div key={ride._id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+      <div key={ride._id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 relative overflow-hidden">
         {/* Status Badge */}
         <div className="flex justify-between items-center mb-4">
           <span className={`text-xs font-bold px-3 py-1 rounded-full ${
@@ -81,7 +135,8 @@ const MyRides = () => {
           </div>
         </div>
 
-        {ride.status === 'booked' && otherPerson && (
+        {/* Contact Details */}
+        {(ride.status === 'booked' || ride.status === 'active') && otherPerson && (
           <div className="bg-orange-50 p-3 rounded-xl mb-4 border border-orange-100 flex items-center justify-between">
             <div>
               <p className="text-[10px] uppercase font-bold text-orange-500">{isDriver ? 'Passenger' : 'Driver'} Details</p>
@@ -91,6 +146,7 @@ const MyRides = () => {
           </div>
         )}
         
+        {/* Date, Time */}
         <div className="flex justify-between items-center pt-4 border-t border-gray-100">
           <div className="flex items-center gap-4 text-xs text-gray-600 font-medium">
             <div className="flex items-center gap-1"><Calendar size={14}/> {day}</div>
@@ -122,6 +178,32 @@ const MyRides = () => {
             )}
           </div>
         )}
+              
+        {/* NAYA LOGIC: Live Map sirf ACTIVE rides par dikhega */}
+        {ride.status === 'active' && (
+          <LiveTracking rideId={ride._id} isDriver={isDriver} />
+        )}
+
+        {/* Rating Button for Passenger (Completed Rides Only) */}
+        {ride.status === 'completed' && !isDriver && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            {!ride.rating ? (
+              <button 
+                onClick={() => setRatingModal({ isOpen: true, rideId: ride._id })}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors"
+              >
+                <Star size={18} /> RATE DRIVER
+              </button>
+            ) : (
+              <div className="flex items-center justify-center gap-1 bg-gray-50 py-2 rounded-xl border border-gray-100">
+                <span className="text-sm font-bold text-gray-600 mr-2">You Rated:</span>
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={16} className={i < ride.rating ? 'text-orange-500 fill-orange-500' : 'text-gray-300'} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -134,8 +216,8 @@ const MyRides = () => {
 
       <div className="px-5 mb-6">
         <div className="flex bg-gray-200 p-1 rounded-xl">
-          <button onClick={() => setActiveTab('booked')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'booked' ? 'bg-white shadow-sm' : ''}`}>Booked Rides</button>
-          <button onClick={() => setActiveTab('offered')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'offered' ? 'bg-white shadow-sm' : ''}`}>Offered Rides</button>
+          <button onClick={() => setActiveTab('booked')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'booked' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>Booked Rides</button>
+          <button onClick={() => setActiveTab('offered')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'offered' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>Offered Rides</button>
         </div>
       </div>
 
@@ -147,6 +229,57 @@ const MyRides = () => {
           </div>
         )}
       </main>
+
+      {/* Rating Modal (Popup) */}
+      {ratingModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-5">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-xl font-bold text-center mb-2">Rate Your Driver</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">How was your ride experience?</p>
+            
+            {/* Star Selection */}
+            <div className="flex justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button 
+                  key={star}
+                  onClick={() => setRatingData({ ...ratingData, rating: star })}
+                  className="focus:outline-none transition-transform active:scale-90"
+                >
+                  <Star 
+                    size={36} 
+                    className={`${ratingData.rating >= star ? 'text-orange-500 fill-orange-500' : 'text-gray-200'} transition-colors`} 
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Review Text Area */}
+            <textarea
+              placeholder="Write a quick review (optional)..."
+              value={ratingData.review}
+              onChange={(e) => setRatingData({ ...ratingData, review: e.target.value })}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              rows="3"
+            ></textarea>
+
+            {/* Modal Buttons */}
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setRatingModal({ isOpen: false, rideId: null })}
+                className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm"
+              >
+                CANCEL
+              </button>
+              <button 
+                onClick={handleSubmitRating}
+                className="flex-1 py-3 bg-orange-500 text-white font-bold rounded-xl text-sm shadow-md"
+              >
+                SUBMIT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
