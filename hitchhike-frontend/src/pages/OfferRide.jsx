@@ -6,7 +6,6 @@ import MapComponent from '../components/MapComponent';
 
 const socket = io("http://localhost:5000");
 
-// Toggle Component
 const Toggle = ({ checked, onChange, label }) => (
   <button
     type="button"
@@ -34,9 +33,54 @@ const OfferRide = () => {
   // Map and Tracking states
   const [pickup, setPickup] = useState(null);
   const [drop, setDrop] = useState(null);
+  
+  // NAYA: Multiple Routes handle karne ke liye states
+  const [availableRoutes, setAvailableRoutes] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [routePoints, setRoutePoints] = useState(null); 
+  const [expectedDistanceKm, setExpectedDistanceKm] = useState(0); 
+
   const watchIdRef = useRef(null);
 
-  // Live Tracking Logic
+  // ==========================================
+  // MULTIPLE ROUTES LOGIC 🛣️
+  // ==========================================
+  useEffect(() => {
+    if (pickup && drop) {
+      const fetchRoute = async () => {
+        // NAYA: URL mein '&alternatives=true' add kiya hai taaki extra raste milein
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}?geometries=geojson&alternatives=true`;
+        try {
+          const res = await fetch(osrmUrl);
+          const data = await res.json();
+          if (data.routes && data.routes.length > 0) {
+            setAvailableRoutes(data.routes); // Saare raste save kar liye
+            setSelectedRouteIndex(0); // Default pehla rasta
+            setRoutePoints(data.routes[0].geometry.coordinates);
+            setExpectedDistanceKm((data.routes[0].distance / 1000).toFixed(1));
+          }
+        } catch (err) {
+          console.error("Route Error:", err);
+        }
+      };
+      fetchRoute();
+    } else {
+      setAvailableRoutes([]);
+      setRoutePoints(null); 
+      setExpectedDistanceKm(0);
+    }
+  }, [pickup, drop]);
+
+  // Jab user "Change Route" dabaye
+  const handleNextRoute = () => {
+    if (availableRoutes.length > 1) {
+      const nextIndex = (selectedRouteIndex + 1) % availableRoutes.length; // Agla rasta, end pe aake shuru se
+      setSelectedRouteIndex(nextIndex);
+      setRoutePoints(availableRoutes[nextIndex].geometry.coordinates);
+      setExpectedDistanceKm((availableRoutes[nextIndex].distance / 1000).toFixed(1));
+    }
+  };
+
   const startTracking = (rideId) => {
     socket.emit('join-ride', rideId);
     watchIdRef.current = navigator.geolocation.watchPosition(
@@ -49,44 +93,31 @@ const OfferRide = () => {
     );
   };
 
-  // Publish API Call with Route Calculation 🚀
   const handlePublish = async () => {
     if (!pickup || !drop || !fare || !departureTime) {
       alert("Please fill all details and select pickup/drop on the map!");
       return;
     }
 
+    if (!routePoints) {
+      alert("Route not found. Please try adjusting your locations.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. OSRM (Free Routing API) se exact road ka rasta nikalo
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}?geometries=geojson`;
-      const routeRes = await fetch(osrmUrl);
-      const routeData = await routeRes.json();
-
-      if (!routeData.routes || routeData.routes.length === 0) {
-        alert("Could not find a valid road route between these points. Please adjust locations.");
-        setLoading(false);
-        return;
-      }
-
-      // Ye humein seedha [[lng, lat], [lng, lat], ...] ka array de dega
-      const routePoints = routeData.routes[0].geometry.coordinates;
-      const expectedDistanceKm = (routeData.routes[0].distance / 1000).toFixed(1); // API distance meters mein deti hai
-
-      // 2. Ab Backend par Data bhejo
       const response = await api.post('/rides', {
         startPoint: { coordinates: [pickup.lng, pickup.lat], address: "Pickup Location" },
         endPoint: { coordinates: [drop.lng, drop.lat], address: "Drop Location" },
-        routePoints: routePoints, // NAYA LOGIC: Blue line ka data chala gaya!
+        routePoints: routePoints, // Jo rasta selected hoga, wahi backend par jayega
         farePerKm: Number(fare),
-        expectedDistance: Number(expectedDistanceKm), // Exact road distance
+        expectedDistance: Number(expectedDistanceKm),
         startTime: departureTime,
       });
 
       const rideId = response.data.ride._id;
       alert("Ride Published Successfully! Live Tracking Started.");
       
-      // Tracking chalu karo backend mein ride create hone ke baad
       startTracking(rideId);
       
     } catch (error) {
@@ -99,7 +130,6 @@ const OfferRide = () => {
 
   useEffect(() => {
     return () => {
-      // Clean up tracking when component unmounts
       if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
     };
   }, []);
@@ -118,11 +148,29 @@ const OfferRide = () => {
           <MapComponent 
             pickup={pickup} 
             drop={drop} 
+            routePoints={routePoints} 
             onMapClick={(loc) => !pickup ? setPickup(loc) : setDrop(loc)} 
           />
-          <div className="flex gap-2 p-3">
-             <button onClick={() => setPickup(null)} className="text-xs font-bold text-green-600">Reset Pickup</button>
-             <button onClick={() => setDrop(null)} className="text-xs font-bold text-red-600">Reset Drop</button>
+          <div className="flex flex-col gap-2 p-3">
+             <div className="flex justify-between items-center w-full">
+               <button onClick={() => {setPickup(null); setDrop(null)}} className="text-xs font-bold text-red-600">Reset Map</button>
+               {expectedDistanceKm > 0 && <span className="text-xs font-bold text-gray-500">Dist: {expectedDistanceKm} km</span>}
+             </div>
+             
+             {/* NAYA: Route Change karne ka button */}
+             {availableRoutes.length > 1 && (
+               <div className="mt-2 flex items-center justify-between bg-blue-50 p-2 rounded-lg">
+                 <span className="text-xs font-semibold text-blue-700">
+                   Route {selectedRouteIndex + 1} of {availableRoutes.length}
+                 </span>
+                 <button 
+                   onClick={handleNextRoute} 
+                   className="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-md shadow active:bg-blue-600"
+                 >
+                   🔄 Change Route
+                 </button>
+               </div>
+             )}
           </div>
         </section>
 
