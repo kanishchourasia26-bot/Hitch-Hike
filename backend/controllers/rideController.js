@@ -197,14 +197,17 @@ const searchRides = async (req, res) => {
       .populate('publisher', 'name phone reliabilityScore isAadhaarVerified isDlVerified')
       .sort({ startTime: 1 });
 
-    // STEP 2: JAVASCRIPT DIRECTION & DROP-OFF FILTER
-    const validRides = ridesNearPickup.filter((ride) => {
+    // ==========================================
+    // STEP 2: JAVASCRIPT DIRECTION, DROP-OFF FILTER & PATH PROJECTION
+    // ==========================================
+    const validRides = ridesNearPickup.map((ride) => {
       let closestStartIdx = -1;
       let minStartDist = Infinity;
       
       let closestEndIdx = -1;
       let minEndDist = Infinity;
 
+      // Driver ke poore raste mein passenger ke start/end ke closest points dhoondho
       ride.routePath.coordinates.forEach((coord, index) => {
         const distToStart = calculateDistance(startLatNum, startLngNum, coord[1], coord[0]);
         if (distToStart < minStartDist) {
@@ -222,8 +225,18 @@ const searchRides = async (req, res) => {
       const isDropoffNearRoute = minEndDist <= radiusKmNum;
       const isCorrectDirection = closestStartIdx < closestEndIdx;
 
-      return isDropoffNearRoute && isCorrectDirection;
-    });
+      // Agar rasta sahi hai, toh exact walking distance aur match points ke saath return karo
+      if (isDropoffNearRoute && isCorrectDirection) {
+        return {
+          ...ride.toObject(),
+          matchPickup: ride.routePath.coordinates[closestStartIdx],
+          matchDrop: ride.routePath.coordinates[closestEndIdx],
+          matchStartDist: minStartDist.toFixed(2), // Kitna door hai pickup (km)
+          matchEndDist: minEndDist.toFixed(2)      // Kitna door hai drop (km)
+        };
+      }
+      return null;
+    }).filter(ride => ride !== null); // Jo invalid rides hain unhe nikaal do
 
     return res.status(200).json({
       count: validRides.length,

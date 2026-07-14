@@ -20,7 +20,7 @@ const BookRide = () => {
   const [loading, setLoading] = useState(false);
   const [availableRides, setAvailableRides] = useState([]);
   
-  // NAYA: Search track karne ke liye state
+  // Search track karne ke liye state
   const [hasSearched, setHasSearched] = useState(false); 
 
   // Distance aur Fare save karne ke liye state
@@ -154,7 +154,7 @@ const BookRide = () => {
           </button>
         </div>
 
-        {/* NAYA LOGIC: Agar search complete hua aur koi ride nahi mili */}
+        {/* Agar search complete hua aur koi ride nahi mili */}
         {hasSearched && availableRides.length === 0 && (
           <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100 text-center mt-2">
             <p className="text-orange-800 font-bold text-lg">No rides found 😔</p>
@@ -176,29 +176,51 @@ const BookRide = () => {
           </div>
         )}
 
-        {/* Results List */}
+        {/* Results List - NAYA WALKING DISTANCE LOGIC YAHAN HAI */}
         {availableRides.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-4">
             <h3 className="font-bold text-gray-900">Available Rides</h3>
             {availableRides.map((ride) => (
-              <div key={ride._id} className="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-col gap-2">
+              <div key={ride._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
                 
+                {/* Driver Info & Fare */}
                 <div className="flex justify-between items-center">
-                  <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                    Rider: {ride.publisher.name}
-                  </p>
-                  <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
-                    ₹{estimatedFare}
-                  </span>
+                  <h3 className="font-extrabold text-gray-800 text-lg">{ride.publisher?.name || "Driver"}</h3>
+                  <span className="text-orange-500 font-bold text-sm">₹{estimatedFare || ride.farePerKm}</span>
                 </div>
-                
-                <button 
+
+                {/* Match Points & Walking Indicator */}
+                <div className="space-y-2 border-l-2 border-dashed border-gray-200 pl-4 ml-2 mt-2 mb-2">
+                  {/* Pickup info */}
+                  <div>
+                    <p className="text-xs font-bold text-green-600 uppercase">📍 Pickup Point</p>
+                    <p className="text-xs text-gray-500">Nearest intersection on driver's route</p>
+                    {ride.matchStartDist > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-orange-50 text-orange-700 px-2 py-1 rounded-md mt-1 border border-orange-100">
+                        🚶 Walk {Math.round(ride.matchStartDist * 1000)} meters to board
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dropoff info */}
+                  <div className="mt-3">
+                    <p className="text-xs font-bold text-red-600 uppercase">🏁 Dropoff Point</p>
+                    <p className="text-xs text-gray-500">Nearest drop on driver's route</p>
+                    {ride.matchEndDist > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-orange-50 text-orange-700 px-2 py-1 rounded-md mt-1 border border-orange-100">
+                        🚶 Walk {Math.round(ride.matchEndDist * 1000)} meters to destination
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Booking Button */}
+                <button
                   onClick={() => handleBookRide(ride._id)}
                   className="mt-2 w-full bg-black text-white py-3 rounded-xl text-sm font-bold transition hover:bg-gray-800 active:scale-[0.98]"
                 >
                   BOOK NOW
                 </button>
-                
               </div>
             ))}
           </section>
