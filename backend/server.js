@@ -103,6 +103,7 @@ io.on('connection', (socket) => {
 
   // Message bhejne aur save karne ka logic
   socket.on("send_message", async (data) => {
+    console.log("🔥 MESSAGE BACKEND PAR AAYA:", data);
     try {
       const { senderId, receiverId, text } = data;
       

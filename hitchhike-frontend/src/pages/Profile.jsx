@@ -6,12 +6,13 @@ import {
   CheckCircle, User, Car, MessageSquare, Calendar, Trash2, AlertCircle, Loader2, Wallet, Edit3, Save, X, PlusCircle, ChevronRight
 } from 'lucide-react';
 import api from '../services/api_service';
-
+import Chat from './Chat'; // 🔥 YEH WALI LINE ADD KARNI HAI 🔥
 const Profile = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+  // Jahan tune baaki states banaye hain (e.g., activeTab)
+const [activeChatPeerId, setActiveChatPeerId] = useState(null);
   const [activeTab, setActiveTab] = useState('profile'); 
   const [chatsLoading, setChatsLoading] = useState(false);
   const [recentChats, setRecentChats] = useState([]);
@@ -338,7 +339,7 @@ const Profile = () => {
                   {recentChats.map((chat, idx) => (
                     <div 
                       key={idx} 
-                      onClick={() => navigate(`/chat/${chat.peerId}`)} 
+                    onClick={() => setActiveChatPeerId(chat.peerId)}
                       className="flex items-center gap-3 p-3 hover:bg-orange-50 cursor-pointer transition border-b last:border-0 border-gray-50 rounded-xl"
                     >
                       <div className="h-12 w-12 rounded-full bg-orange-100 text-orange-600 flex justify-center items-center font-black flex-shrink-0">
@@ -415,6 +416,13 @@ const Profile = () => {
         )}
 
       </main>
+      {/* 🔥 FLOATING CHATBOT / MODAL 🔥 */}
+      {activeChatPeerId && (
+        <Chat 
+          peerId={activeChatPeerId} 
+          onClose={() => setActiveChatPeerId(null)} 
+        />
+      )}
     </div>
   );
 };
