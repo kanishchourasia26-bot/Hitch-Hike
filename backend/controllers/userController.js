@@ -20,10 +20,8 @@ const registerUser = async (req, res) => {
   console.log("DEBUG: Incoming Request Body:", req.body); 
 
   try {
-    // Yahan maine 'const' ki jagah 'let' kar diya hai taaki hum email ko modify kar sakein
     let { name, email, phone, password, role } = req.body; 
 
-    // --- Basic validation ---
     if (!phone || !password || !role) {
       return res.status(400).json({ message: 'phone, password and role are required' });
     }
@@ -36,14 +34,11 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
 
-    // --- YAHAN FIX KIYA HAI: Agar frontend se email nahi aaya, toh phone number se ek unique dummy email bana lo ---
     if (!email || email.trim() === '') {
       email = `${phone}@rideapp.com`; 
     }
 
-    // --- NAYA LOGIC: Phone aur Email dono ka Duplicate check ---
     const searchQueries = [{ phone }, { email }];
-
     const existingUser = await User.findOne({ $or: searchQueries });
     
     if (existingUser) {
@@ -55,14 +50,12 @@ const registerUser = async (req, res) => {
       }
     }
 
-    // --- Hash password ---
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // --- Create user ---
     const user = await User.create({
       name,
-      email, // Yahan ab unique dummy email jayega agar user ne nahi diya toh
+      email,
       phone,
       password: hashedPassword,
       role,
@@ -76,11 +69,11 @@ const registerUser = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email, // Frontend ko dummy email mil jayega
+        email: user.email,
         phone: user.phone,
         role: user.role,
         isAadhaarVerified: user.isAadhaarVerified,
-        isDLVerified: user.isDLVerified,
+        isDLVerified: user.isDlVerified,
         reliabilityScore: user.reliabilityScore,
         walletBalance: user.walletBalance,
       },
@@ -88,7 +81,6 @@ const registerUser = async (req, res) => {
   } catch (error) {
     console.error(`registerUser error: ${error.message}`);
     
-    // --- NAYA LOGIC: MongoDB Error Handling ---
     if (error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
       return res.status(400).json({ message: `An account with this ${field} already exists.` });
@@ -135,7 +127,7 @@ const loginUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         isAadhaarVerified: user.isAadhaarVerified,
-        isDLVerified: user.isDLVerified,
+        isDLVerified: user.isDlVerified,
         reliabilityScore: user.reliabilityScore,
         walletBalance: user.walletBalance,
       },
@@ -170,23 +162,20 @@ const verifyDocuments = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Agar Aadhaar number aaya hai
     if (aadhaarNumber) {
-      // Asli app mein yahan OTP/API logic lagta hai. Hum direct true kar rahe hain.
       user.isAadhaarVerified = true;
       if (gender) {
-        user.gender = gender; // Gender Aadhaar se nikal liya (mock)
+        user.gender = gender;
       }
     }
 
-    // Agar DL number aaya hai
     if (dlNumber) {
       user.isDlVerified = true;
     }
 
     await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Verification successful!',
       user: {
         id: user._id,
@@ -198,15 +187,49 @@ const verifyDocuments = async (req, res) => {
     });
   } catch (error) {
     console.error(`verifyDocuments error: ${error.message}`);
-    res.status(500).json({ message: 'Server error during verification' });
+    return res.status(500).json({ message: 'Server error during verification' });
   }
 };
 
-// Exports mein isko add karna mat bhoolna!
-// module.exports = { registerUser, authUser, getUserProfile, verifyDocuments };
+/**
+ * @route   PUT /api/users/profile
+ * @desc    Update user profile details
+ * @access  Private
+ */
+const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, age, gender, vehicleNumber } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (age !== undefined) user.age = age;
+    if (gender) user.gender = gender;
+    if (vehicleNumber !== undefined) user.vehicleNumber = vehicleNumber;
+
+    await user.save();
+
+    return res.status(200).json({ 
+      message: 'Profile updated successfully!', 
+      user 
+    });
+  } catch (error) {
+    console.error(`updateProfile error: ${error.message}`);
+    return res.status(500).json({ message: 'Server error while updating profile' });
+  }
+};
+
+// All exports cleanly mapped
+// All exports cleanly mapped for user controller
 module.exports = {
   registerUser,
   loginUser,
   getMe,
-  verifyDocuments
+  verifyDocuments,
+  updateProfile
 };

@@ -1,40 +1,35 @@
 const express = require('express');
 const router = express.Router();
 
-// YAHAN MAINE 'rateRide' KO ADD KAR DIYA HAI 👇
+// SIRF wahi import karo jo naye rideController mein define kiya hai
 const { 
   createRide, 
   searchRides, 
   getRideById, 
   bookRide, 
   getMyRides, 
-  updateRideStatus, 
-  rateRide 
+  deleteRide
 } = require('../controllers/rideController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware'); // Agar middleware ka folder 'middlewares' hai toh naam theek kar lena
 
-// @route  POST /api/rides
+// @route   POST /api/rides (Offer Commute)
 router.post('/', protect, createRide);
 
-// @route  POST /api/rides/search
+// @route   POST /api/rides/search (Find Commutes)
 router.post('/search', protect, searchRides);
 
-// @route  POST /api/rides/book
+// @route   POST /api/rides/book (Join Commute)
 router.post('/book', protect, bookRide);
 
-// @route  GET /api/rides/my-rides
-// IMPORTANT: Isko /:id se pehle rakhna!
+// @route   GET /api/rides/my-rides (Dashboard Offered & Booked)
+// IMPORTANT: Isko /:id se pehle rakhna zaroori hai!
 router.get('/my-rides', protect, getMyRides);
 
-// @route  GET /api/rides/:id
+// @route   DELETE /api/rides/:id (Commuter deletes active commute)
+router.delete('/:id', protect, deleteRide);
+
+// @route   GET /api/rides/:id (Single ride detail)
 router.get('/:id', protect, getRideById);
-
-// @route  PUT /api/rides/:id/status
-router.put('/:id/status', protect, updateRideStatus);
-
-// @route  POST /api/rides/:id/rate
-// Rate a ride
-router.post('/:id/rate', protect, rateRide);
 
 module.exports = router;

@@ -1,40 +1,5 @@
 const mongoose = require('mongoose');
 
-// Reusable GeoJSON Point sub-schema
-const pointSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point',
-      required: true,
-    },
-    coordinates: {
-      // [longitude, latitude] - GeoJSON order, NOT [lat, lng]
-      type: [Number],
-      required: true,
-      validate: {
-        validator: function (coords) {
-          return (
-            Array.isArray(coords) &&
-            coords.length === 2 &&
-            coords[0] >= -180 &&
-            coords[0] <= 180 &&
-            coords[1] >= -90 &&
-            coords[1] <= 90
-          );
-        },
-        message: 'Coordinates must be a valid [longitude, latitude] pair',
-      },
-    },
-    address: {
-      type: String,
-      trim: true,
-    },
-  },
-  { _id: false }
-);
-
 const rideSchema = new mongoose.Schema(
   {
     publisher: {
@@ -42,69 +7,74 @@ const rideSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-   // Purana status field:
-  status: {
-    type: String,
-    enum: ['published', 'booked', 'active', 'completed', 'cancelled'],
-    default: 'published',
-  },
-  // NAYA LOGIC: Rating aur Review add karo
-  rating: {
-    type: Number,
-    min: 1,
-    max: 5
-  },
-  review: {
-    type: String,
-    trim: true
-  },
+    // NAYA: Ab multiple passengers join kar sakte hain
+    passengers: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        seatsBooked: {
+          type: Number,
+          default: 1,
+        }
+      }
+    ],
     startPoint: {
-      type: pointSchema,
-      required: true,
+      type: { type: String, default: 'Point' },
+      coordinates: { type: [Number], required: true },
+      address: String,
     },
     endPoint: {
-      type: pointSchema,
+      type: { type: String, default: 'Point' },
+      coordinates: { type: [Number], required: true },
+      address: String,
+    },
+    routePath: {
+      type: { type: String, default: 'LineString' },
+      coordinates: { type: [[Number]], required: true },
+    },
+    
+    // NAYA LOGIC: Daily Commute ke liye 'days' aur 'reachTime'
+    days: [
+      {
+        type: String, 
+        required: true 
+      }
+    ],
+    reachTime: {
+      type: String,
       required: true,
     },
+    vehicleName: {
+      type: String,
+      default: 'Commuter Vehicle'
+    },
+    womenOnly: {
+      type: Boolean,
+      default: false
+    },
+    
     farePerKm: {
       type: Number,
-      required: false,
-      min: 0,
+      default: 6,
     },
     expectedDistance: {
       type: Number,
-      required: false,
-      min: 0,
+      default: 0,
     },
-    passenger: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
+    status: {
+      type: String,
+      enum: ['active', 'cancelled', 'completed'],
+      default: 'active',
     },
-    startTime: {
-      type: Date,
-      required: true,
-    },
-   
-routePath: {
-  type: {
-    type: String,
-    enum: ['LineString'],
-    default: 'LineString'
   },
-  coordinates: {
-    type: [[Number]], 
-    required: true
-  }
-},
-  },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Critical: 2dsphere indexes to enable future radius-based ($near / $geoWithin) searching
+// Indexes for GeoSpatial queries
 rideSchema.index({ startPoint: '2dsphere' });
 rideSchema.index({ endPoint: '2dsphere' });
-rideSchema.index({ routePath: '2dsphere' }); // LineString par spatial index lagaya
+rideSchema.index({ routePath: '2dsphere' });
+
 module.exports = mongoose.model('Ride', rideSchema);

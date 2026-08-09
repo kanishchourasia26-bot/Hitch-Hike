@@ -1,230 +1,236 @@
-import React, { useState } from 'react';
-import { Search, Loader2 } from 'lucide-react';
-import api from '../services/api_service';
+import React, { useState, useEffect } from 'react';
+import { Search, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
-// 1. Fare Calculator Import
-import { calculateDistanceAndFare } from '../utils/fareCalculator'; 
 
-const PREFERENCES = [
-  { id: 'women-only', label: 'Women-only riders' },
-  { id: 'quiet', label: 'Quiet ride' },
-  { id: 'chat', label: 'Happy to chat' },
-  { id: 'kyc', label: 'KYC verified' },
+const DAYS_OF_WEEK = [
+  { id: 'mon', label: 'M' },
+  { id: 'tue', label: 'T' },
+  { id: 'wed', label: 'W' },
+  { id: 'thu', label: 'T' },
+  { id: 'fri', label: 'F' },
+  { id: 'sat', label: 'S' },
+  { id: 'sun', label: 'S' },
 ];
 
+const Toggle = ({ checked, onChange, label }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className="flex w-full items-center justify-between py-1 cursor-pointer"
+  >
+    <span className="text-sm font-medium text-gray-800">{label}</span>
+    <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? 'bg-orange-500' : 'bg-gray-200'}`}>
+      <span className={`inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} style={{ height: '18px', width: '18px' }} />
+    </span>
+  </button>
+);
+
 const BookRide = () => {
+  const navigate = useNavigate();
+
+  // Form States
+  const [passengers, setPassengers] = useState('');
+  const [selectedDays, setSelectedDays] = useState(['mon', 'tue', 'wed', 'thu', 'fri']); 
+  const [reachTime, setReachTime] = useState('09:30'); 
+  const [radiusKm, setRadiusKm] = useState(1.5);
+  const [womenOnly, setWomenOnly] = useState(false);
+  
+  // NAYA: KYC Verified state
+  const [kycVerified, setKycVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // Map and Tracking states
   const [pickup, setPickup] = useState(null);
   const [drop, setDrop] = useState(null);
-  const [activePrefs, setActivePrefs] = useState([]);
-  const [radiusKm, setRadiusKm] = useState(1.5);
-  const [loading, setLoading] = useState(false);
-  const [availableRides, setAvailableRides] = useState([]);
   
-  // Search track karne ke liye state
-  const [hasSearched, setHasSearched] = useState(false); 
+  // Multiple Routes states
+  const [availableRoutes, setAvailableRoutes] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [routePoints, setRoutePoints] = useState(null); 
+  const [expectedDistanceKm, setExpectedDistanceKm] = useState(0); 
 
-  // Distance aur Fare save karne ke liye state
-  const [tripDistance, setTripDistance] = useState(null);
-  const [estimatedFare, setEstimatedFare] = useState(null);
+  useEffect(() => {
+    if (pickup && drop) {
+      const fetchRoute = async () => {
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}?geometries=geojson&alternatives=true`;
+        try {
+          const res = await fetch(osrmUrl);
+          const data = await res.json();
+          if (data.routes && data.routes.length > 0) {
+            setAvailableRoutes(data.routes);
+            setSelectedRouteIndex(0);
+            setRoutePoints(data.routes[0].geometry.coordinates);
+            setExpectedDistanceKm((data.routes[0].distance / 1000).toFixed(1));
+          }
+        } catch (err) {
+          console.error("Route Error:", err);
+        }
+      };
+      fetchRoute();
+    } else {
+      setAvailableRoutes([]);
+      setRoutePoints(null); 
+      setExpectedDistanceKm(0);
+    }
+  }, [pickup, drop]);
 
-  const togglePreference = (id) => {
-    setActivePrefs((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+  const handleNextRoute = () => {
+    if (availableRoutes.length > 1) {
+      const nextIndex = (selectedRouteIndex + 1) % availableRoutes.length;
+      setSelectedRouteIndex(nextIndex);
+      setRoutePoints(availableRoutes[nextIndex].geometry.coordinates);
+      setExpectedDistanceKm((availableRoutes[nextIndex].distance / 1000).toFixed(1));
+    }
+  };
+
+  const toggleDay = (id) => {
+    setSelectedDays((prev) => 
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
     );
   };
 
-  const findRides = async () => {
-    if (!pickup || !drop) {
-      alert("Please select pickup and drop points on the map!");
+ const handleSearch = () => {
+    if (!pickup || !drop || !passengers || selectedDays.length === 0 || !reachTime) {
+      alert("Please fill commute details, select days/time, and choose locations on the map!");
       return;
     }
-    
+    if (!routePoints) {
+      alert("Route not found. Please try adjusting your locations.");
+      return;
+    }
+
     setLoading(true);
-    setHasSearched(false); // Search shuru hote hi isko reset kar do
+    const daysQuery = selectedDays.join(',');
     
-    try {
-      // Backend se rides search karo
-      const response = await api.post('/rides/search', {
-        startLng: pickup.lng,
-        startLat: pickup.lat,
-        endLng: drop.lng,
-        endLat: drop.lat,
-        radiusInKm: radiusKm,
-        preferences: activePrefs 
-      });
-      
-      setAvailableRides(response.data.rides || []);
-      setHasSearched(true); // Search complete ho gaya
-
-      // OSRM API call lagayi Distance aur Fare ke liye
-      const fareData = await calculateDistanceAndFare(
-        pickup.lng, pickup.lat,
-        drop.lng, drop.lat
-      );
-
-      // Agar map API se sahi data aaya, toh usko state mein daal do
-      if (fareData.success) {
-        setTripDistance(fareData.distance);
-        setEstimatedFare(fareData.fare);
-      }
-
-    } catch (error) {
-      // Agar backend error de (no rides found), toh list clear karke message dikhao
-      setAvailableRides([]);
-      setHasSearched(true);
-      console.error(error);
-    } finally {
+    // 🔥 FIX: /user/search ki jagah sirf /search kar diya hai
+    setTimeout(() => {
+      navigate(`/search?pickuplat=${pickup.lat}&pickuplon=${pickup.lng}&droplat=${drop.lat}&droplon=${drop.lng}&passengers=${passengers}&womenOnly=${womenOnly}&kycVerified=${kycVerified}&days=${daysQuery}&reachTime=${encodeURIComponent(reachTime)}&radius=${radiusKm}`);
       setLoading(false);
-    }
-  };
-
-  const handleBookRide = async (rideId) => {
-    try {
-      const response = await api.post('/rides/book', { rideId });
-      alert("Ride booked successfully!");
-      setAvailableRides((prevRides) => prevRides.filter(ride => ride._id !== rideId));
-    } catch (error) {
-      alert("Booking failed: " + (error.response?.data?.error || "Please try again"));
-      console.error(error);
-    }
+    }, 500);
   };
 
   return (
     <div className="min-h-screen pb-24 bg-gray-50">
       <header className="px-5 pt-8 pb-6">
         <h1 className="text-3xl font-extrabold text-gray-900">
-          Book a <span className="text-orange-500">Ride.</span>
+          Find <span className="text-orange-500">a Commute.</span>
         </h1>
+        <p className="text-gray-500 text-sm mt-1 font-medium">Pair up with regular commuters</p>
       </header>
 
-      <main className="px-5 space-y-6">
-        {/* Map Integration */}
+      <main className="px-5 space-y-4">
+        {/* Map Section */}
         <section className="rounded-2xl bg-white p-2 shadow-sm">
           <MapComponent 
             pickup={pickup} 
             drop={drop} 
+            routePoints={routePoints} 
             onMapClick={(loc) => !pickup ? setPickup(loc) : setDrop(loc)} 
           />
-          <div className="flex gap-4 p-3 border-t">
-             <button onClick={() => setPickup(null)} className="text-xs font-bold text-green-600">Reset Pickup</button>
-             <button onClick={() => setDrop(null)} className="text-xs font-bold text-red-600">Reset Drop</button>
+          <div className="flex flex-col gap-2 p-3">
+             <div className="flex justify-between items-center w-full">
+               <button onClick={() => {setPickup(null); setDrop(null)}} className="text-xs font-bold text-red-600 cursor-pointer">Reset Map</button>
+               {expectedDistanceKm > 0 && <span className="text-xs font-bold text-gray-500">Dist: {expectedDistanceKm} km</span>}
+             </div>
+             
+             {availableRoutes.length > 1 && (
+               <div className="mt-2 flex items-center justify-between bg-orange-50 p-2 rounded-lg">
+                 <span className="text-xs font-semibold text-orange-700">
+                   Route {selectedRouteIndex + 1} of {availableRoutes.length}
+                 </span>
+                 <button 
+                   onClick={handleNextRoute} 
+                   className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-md shadow active:bg-orange-600 cursor-pointer"
+                 >
+                   🔄 Change Route
+                 </button>
+               </div>
+             )}
           </div>
         </section>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm space-y-6">
-          {/* Preferences UI */}
-          <div>
-            <p className="text-xs font-semibold text-gray-500 mb-3">Preferences</p>
-            <div className="flex flex-wrap gap-2">
-              {PREFERENCES.map((pref) => (
-                <button
-                  key={pref.id}
-                  onClick={() => togglePreference(pref.id)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-full border transition ${
-                    activePrefs.includes(pref.id) 
-                      ? 'bg-orange-500 text-white border-orange-500' 
-                      : 'bg-white text-gray-600 border-gray-200'
-                  }`}
-                >
-                  {pref.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Schedule & Commute Details Section */}
+        <section className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
+           <input 
+             type="number" 
+             placeholder="Seats Needed (e.g. 1)" 
+             value={passengers}
+             className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500" 
+             onChange={(e) => setPassengers(e.target.value)} 
+             min="1" max="4"
+           />
+           
+           {/* Days Selector */}
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-gray-500 uppercase">Commute Days</label>
+             <div className="flex justify-between gap-1">
+               {DAYS_OF_WEEK.map((d) => (
+                 <button
+                   key={d.id}
+                   type="button"
+                   onClick={() => toggleDay(d.id)}
+                   className={`w-9 h-9 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                     selectedDays.includes(d.id) 
+                       ? 'bg-orange-500 text-white shadow-md' 
+                       : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                   }`}
+                 >
+                   {d.label}
+                 </button>
+               ))}
+             </div>
+           </div>
 
+           {/* Reach Time */}
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+               <Clock size={12} /> Expected Reach Time
+             </label>
+             <input 
+               type="time" 
+               value={reachTime}
+               className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500 cursor-pointer font-bold" 
+               onChange={(e) => setReachTime(e.target.value)} 
+             />
+           </div>
+        </section>
+
+        {/* Preferences & Radius */}
+        <section className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
+          <Toggle checked={womenOnly} onChange={setWomenOnly} label="Women-only commute" />
+          
+          {/* NAYA: KYC Verified Toggle */}
+          <Toggle checked={kycVerified} onChange={setKycVerified} label="KYC Verified" />
+          
           {/* Radius Slider */}
-          <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2">Search Radius</p>
-            <input
-              type="range"
-              min={0.5} max={5.0} step={0.1}
-              value={radiusKm}
-              onChange={(e) => setRadiusKm(parseFloat(e.target.value))}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-orange-500"
+          <div className="pt-2 border-t border-gray-100">
+            <div className="flex justify-between items-center text-xs font-bold text-gray-700 mb-2">
+              <span>Walk Distance</span>
+              <span className="bg-gray-100 px-2 py-1 rounded-md text-orange-600">{radiusKm} km</span>
+            </div>
+            <input 
+              type="range" 
+              min={0.5} 
+              max={5.0} 
+              step={0.1} 
+              value={radiusKm} 
+              onChange={(e) => setRadiusKm(parseFloat(e.target.value))} 
+              className="w-full cursor-pointer accent-orange-500" 
             />
-            <span className="text-sm font-bold text-orange-500">{radiusKm.toFixed(1)} km</span>
           </div>
+        </section>
 
-          <button
-            onClick={findRides}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 text-sm font-bold text-white shadow-lg shadow-orange-200 transition active:scale-[0.98]"
-          >
-            {loading ? <Loader2 className="animate-spin" /> : <><Search size={18} /> FIND RIDES</>}
-          </button>
-        </div>
-
-        {/* Agar search complete hua aur koi ride nahi mili */}
-        {hasSearched && availableRides.length === 0 && (
-          <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100 text-center mt-2">
-            <p className="text-orange-800 font-bold text-lg">No rides found 😔</p>
-            <p className="text-sm text-orange-600 mt-1">
-              Try increasing your search radius to find riders further away.
-            </p>
-          </div>
-        )}
-
-        {/* Results aane par Fare aur Distance ka Smart Banner */}
-        {estimatedFare !== null && tripDistance !== null && availableRides.length > 0 && (
-          <div className="bg-green-50 p-4 rounded-xl shadow-sm border border-green-200 mb-2">
-            <h3 className="text-green-800 font-extrabold text-xl">
-              Trip Fare: ₹{estimatedFare}
-            </h3>
-            <p className="text-sm font-medium text-green-700 mt-1">
-              Total Distance: {tripDistance} km (@ ₹6/km)
-            </p>
-          </div>
-        )}
-
-        {/* Results List - NAYA WALKING DISTANCE LOGIC YAHAN HAI */}
-        {availableRides.length > 0 && (
-          <section className="space-y-4">
-            <h3 className="font-bold text-gray-900">Available Rides</h3>
-            {availableRides.map((ride) => (
-              <div key={ride._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
-                
-                {/* Driver Info & Fare */}
-                <div className="flex justify-between items-center">
-                  <h3 className="font-extrabold text-gray-800 text-lg">{ride.publisher?.name || "Driver"}</h3>
-                  <span className="text-orange-500 font-bold text-sm">₹{estimatedFare || ride.farePerKm}</span>
-                </div>
-
-                {/* Match Points & Walking Indicator */}
-                <div className="space-y-2 border-l-2 border-dashed border-gray-200 pl-4 ml-2 mt-2 mb-2">
-                  {/* Pickup info */}
-                  <div>
-                    <p className="text-xs font-bold text-green-600 uppercase">📍 Pickup Point</p>
-                    <p className="text-xs text-gray-500">Nearest intersection on driver's route</p>
-                    {ride.matchStartDist > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-orange-50 text-orange-700 px-2 py-1 rounded-md mt-1 border border-orange-100">
-                        🚶 Walk {Math.round(ride.matchStartDist * 1000)} meters to board
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Dropoff info */}
-                  <div className="mt-3">
-                    <p className="text-xs font-bold text-red-600 uppercase">🏁 Dropoff Point</p>
-                    <p className="text-xs text-gray-500">Nearest drop on driver's route</p>
-                    {ride.matchEndDist > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold bg-orange-50 text-orange-700 px-2 py-1 rounded-md mt-1 border border-orange-100">
-                        🚶 Walk {Math.round(ride.matchEndDist * 1000)} meters to destination
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Booking Button */}
-                <button
-                  onClick={() => handleBookRide(ride._id)}
-                  className="mt-2 w-full bg-black text-white py-3 rounded-xl text-sm font-bold transition hover:bg-gray-800 active:scale-[0.98]"
-                >
-                  BOOK NOW
-                </button>
-              </div>
-            ))}
-          </section>
-        )}
+        {/* Search Button */}
+        <button
+          onClick={handleSearch}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 text-sm font-bold text-white shadow-lg active:bg-orange-600 transition disabled:opacity-70 cursor-pointer"
+        >
+          {loading ? 'SEARCHING...' : <><Search size={18} /> FIND COMMUTERS</>}
+        </button>
       </main>
     </div>
   );

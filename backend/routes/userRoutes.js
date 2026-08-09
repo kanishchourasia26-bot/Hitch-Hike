@@ -1,21 +1,29 @@
 const express = require('express');
 const router = express.Router();
 
-// Yahan maine verifyDocuments ko import mein add kar diya hai 👇
-const { registerUser, loginUser, getMe, verifyDocuments } = require('../controllers/userController');
-const { protect } = require('../middleware/authMiddleware');
+const { 
+  registerUser, 
+  loginUser, 
+  getMe, 
+  verifyDocuments, 
+  updateProfile // <-- Yeh zaroori hai
+} = require('../controllers/userController');
 
-// @route  POST /api/users/register
+const { protect } = require('../middleware/authMiddleware'); // Ensure correct path to middleware
+
+// @route   POST /api/users/register
 router.post('/register', registerUser);
 
-// @route  POST /api/users/login
+// @route   POST /api/users/login
 router.post('/login', loginUser);
 
-// @route  GET /api/users/me (protected)
+// @route   GET /api/users/me
 router.get('/me', protect, getMe);
 
-// @route  POST /api/users/verify
-// @desc   Verify Aadhaar or Driving License
+// @route   POST /api/users/verify
 router.post('/verify', protect, verifyDocuments);
+
+// @route   PUT /api/users/profile (EDIT PROFILE ROUTE)
+router.put('/profile', protect, updateProfile); // <-- Naya route yahan add hua hai!
 
 module.exports = router;
