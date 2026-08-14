@@ -1,3 +1,4 @@
+import { io } from 'socket.io-client';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
@@ -5,6 +6,7 @@ import {
   ShieldCheck, MapPin, ShieldAlert, LogOut, History, 
   CheckCircle, User, Car, MessageSquare, Calendar, Trash2, AlertCircle, Loader2, Wallet, Edit3, Save, X, PlusCircle, ChevronRight
 } from 'lucide-react';
+
 import api from '../services/api_service';
 import Chat from './Chat'; // 🔥 YEH WALI LINE ADD KARNI HAI 🔥
 const Profile = () => {
@@ -36,7 +38,30 @@ const [activeChatPeerId, setActiveChatPeerId] = useState(null);
   useEffect(() => {
     fetchProfileData();
   }, []);
+// 🔥 NAYA: Background Socket Listener (For Live Unread Badges) 🔥
+  useEffect(() => {
+    const userStore = JSON.parse(localStorage.getItem('user')) || {};
+    const myId = userStore._id || userStore.id || userStore.user?._id;
 
+    if (!myId) return;
+
+    // Backend se connect karo
+    const socket = io("http://localhost:5000"); // Apna port check kar lena
+    socket.emit("join_chat", myId);
+
+    // Jab koi naya message aaye
+    socket.on("receive_message", (message) => {
+      // Agar wo wali chat ka modal ABHI nahi khula hai, tabhi notification / badge dikhao
+      if (activeChatPeerId !== message.sender) {
+        // Chupchaap background mein inbox fetch karlo
+        fetchInboxChats(); 
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [activeChatPeerId]); // Jab modal khule/band ho toh listener update ho
   // 🆕 NAYA: Jab 'chats' tab khulega tab API call hogi
   useEffect(() => {
     if (activeTab === 'chats') {
@@ -371,6 +396,7 @@ const [activeChatPeerId, setActiveChatPeerId] = useState(null);
             </div>
           </motion.div>
         )}
+        
 
         {/* TAB 4: VERIFICATION */}
         {activeTab === 'verification' && (
@@ -414,6 +440,7 @@ const [activeChatPeerId, setActiveChatPeerId] = useState(null);
              )}
           </motion.div>
         )}
+        
 
       </main>
       {/* 🔥 FLOATING CHATBOT / MODAL 🔥 */}

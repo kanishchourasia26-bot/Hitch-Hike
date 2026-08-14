@@ -223,7 +223,43 @@ const updateProfile = async (req, res) => {
     return res.status(500).json({ message: 'Server error while updating profile' });
   }
 };
+// 1️⃣ USER SUBMISSION (Status goes to 'Pending')
+const verifyUser = async (req, res) => {
+  try {
+    const userId = req.user._id; 
+    const { aadhaarNumber, dlNumber, gender } = req.body;
 
+    if (!aadhaarNumber && !dlNumber) {
+      return res.status(400).json({ message: "Bhai, kam se kam ek ID toh daal!" });
+    }
+
+    // User ne details daal di hain, par abhi VERIFY nahi hua hai
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          aadhaarNumber: aadhaarNumber || undefined,
+          dlNumber: dlNumber || undefined,
+          gender: gender || undefined,
+          kycStatus: 'pending', // 🔥 NAYA FIELD: Status Pending ho gaya
+          kycVerified: false    // 🔥 Abhi False hi rahega jab tak admin na chahe
+        }
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ 
+      message: "Documents submitted successfully! Waiting for Admin approval. ⏳", 
+      user: updatedUser 
+    });
+
+  } catch (error) {
+    console.error("Verification Error:", error);
+    res.status(500).json({ message: "Server mein kuch gadbad hai" });
+  }
+};
+// Yahan neeche verifyUser ko export karna mat bhoolna!
+// module.exports = { ...tere purane functions, verifyUser };
 // All exports cleanly mapped
 // All exports cleanly mapped for user controller
 module.exports = {
@@ -231,5 +267,7 @@ module.exports = {
   loginUser,
   getMe,
   verifyDocuments,
-  updateProfile
+  updateProfile,
+  verifyUser
+
 };

@@ -4,14 +4,18 @@ import { motion } from "framer-motion";
 import { 
   ArrowLeft, Loader2, MapPin, Navigation, 
   Footprints, User, ShieldCheck, AlertCircle, 
-  RefreshCw, CheckCircle2, Clock, Calendar, MessageSquare // <-- MessageSquare add kiya hai
+  RefreshCw, CheckCircle2, Clock, Calendar, MessageSquare
 } from 'lucide-react';
 import api from '../services/api_service';
 import MapComponent from '../components/MapComponent';
+import Chat from './Chat'; // 🔥 YAHAN CHAT IMPORT KIYA HAI 🔥
 
 function Search() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // 🔥 CHAT MODAL KE LIYE STATE 🔥
+  const [activeChatPeerId, setActiveChatPeerId] = useState(null);
 
   // 1. Safely Parse URL Parameters
   const pickUpLat = parseFloat(searchParams.get("pickuplat")) || 0;
@@ -280,15 +284,14 @@ function Search() {
 
               {/* 🔥 NEW ACTION BUTTONS ROW: DM & JOIN COMMUTE 🔥 */}
               <div className="flex gap-3 mt-5 pt-4 border-t border-gray-100">
-                {/* DM Button */}
-                
-            <button
-  onClick={() => navigate(`/chat/${ride.publisher?._id || ride.publisher}`)}
-  className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-50 text-orange-600 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-100 border border-orange-200 transition cursor-pointer"
->
-  <MessageSquare size={16} />
-  <span>DM</span>
-            </button>
+                {/* 🔥 YAHAN ONCLICK CHANGE KIYA HAI 🔥 */}
+                <button
+                  onClick={() => setActiveChatPeerId(ride.publisher?._id || ride.publisher)}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-50 text-orange-600 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-100 border border-orange-200 transition cursor-pointer"
+                >
+                  <MessageSquare size={16} />
+                  <span>DM</span>
+                </button>
 
                 {/* Join Commute Button */}
                 <motion.button
@@ -315,6 +318,14 @@ function Search() {
           ))}
         </section>
       </main>
+
+      {/* 🔥 FLOATING CHATBOT / MODAL 🔥 */}
+      {activeChatPeerId && (
+        <Chat 
+          peerId={activeChatPeerId} 
+          onClose={() => setActiveChatPeerId(null)} 
+        />
+      )}
     </div>
   );
 }

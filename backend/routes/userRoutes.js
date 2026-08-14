@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const { verifyUser } = require('../controllers/userController');
 const { 
   registerUser, 
   loginUser, 
@@ -22,7 +22,7 @@ router.get('/me', protect, getMe);
 
 // @route   POST /api/users/verify
 router.post('/verify', protect, verifyDocuments);
-
+router.post('/verify', protect, verifyUser);
 // @route   PUT /api/users/profile (EDIT PROFILE ROUTE)
 router.put('/profile', protect, updateProfile); // <-- Naya route yahan add hua hai!
 
