@@ -1,14 +1,16 @@
 import { io } from 'socket.io-client';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ShieldCheck, MapPin, ShieldAlert, LogOut, History, 
-  CheckCircle, User, Car, MessageSquare, Calendar, Trash2, AlertCircle, Loader2, Wallet, Edit3, Save, X, PlusCircle, ChevronRight
+  ShieldCheck, LogOut, User, Car, MessageSquare, Trash2, 
+  Loader2, Wallet, Edit3, Save, X, PlusCircle, ChevronRight,
+  Bell, Settings, Award, TrendingUp, Clock, MapPin, Phone,
+  Mail, Calendar as CalendarIcon, CheckCircle2, Shield
 } from 'lucide-react';
 
 import api from '../services/api_service';
-import Chat from './Chat'; // 🔥 YEH WALI LINE ADD KARNI HAI 🔥
+import Chat from './Chat';
 const Profile = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
@@ -165,113 +167,338 @@ const [activeChatPeerId, setActiveChatPeerId] = useState(null);
     navigate('/login'); 
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-orange-500 font-bold">Loading Dashboard...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-gray-50">
+        <Loader2 size={40} className="animate-spin text-orange-500 mb-3" />
+        <p className="text-sm font-bold text-gray-600">Loading your profile...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 pb-24">
       
-      {/* HEADER BANNER */}
-      <div className="bg-orange-600 text-white pt-8 pb-12 px-5 rounded-b-[40px] shadow-sm">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-xl font-black border border-orange-400 shadow-inner">
-              {userData?.name ? userData.name[0].toUpperCase() : "U"}
-            </div>
-            <div>
-              <h1 className="text-lg font-black">{userData?.name}</h1>
-              <p className="text-orange-100 text-xs mt-0.5">{userData?.phone || userData?.email}</p>
+      {/* MODERN HEADER */}
+      <div className="relative bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white pt-8 pb-20 px-5 overflow-hidden">
+        {/* Decorative Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl" />
+        </div>
+        
+        <div className="relative max-w-3xl mx-auto">
+          {/* Top Actions */}
+          <div className="flex justify-between items-center mb-6">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(-1)}
+              className="h-10 w-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/20 transition"
+            >
+              <ChevronRight size={18} className="rotate-180" />
+            </motion.button>
+            
+            <div className="flex gap-2">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                className="h-10 w-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/20 transition"
+              >
+                <Bell size={18} />
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                className="h-10 w-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/20 transition"
+              >
+                <Settings size={18} />
+              </motion.button>
             </div>
           </div>
-          
-          <div className="bg-orange-500 border border-orange-400 px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-inner">
-            <Wallet size={16} />
-            <div>
-              <p className="text-[9px] text-orange-200 uppercase font-black">Wallet</p>
-              <p className="text-xs font-black">₹{userData?.walletBalance || 0}</p>
+
+          {/* Profile Info */}
+          <div className="flex items-start gap-4 mb-6">
+            <div className="relative">
+              <div className="h-20 w-20 rounded-3xl bg-white text-orange-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-black/20">
+                {userData?.name ? userData.name[0].toUpperCase() : "U"}
+              </div>
+              {(userData?.isAadhaarVerified || userData?.isDlVerified) && (
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-green-500 rounded-xl flex items-center justify-center border-2 border-white shadow-lg">
+                  <CheckCircle2 size={14} className="text-white" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-2xl font-black">{userData?.name || "User"}</h1>
+                {userData?.reliabilityScore >= 80 && (
+                  <div className="px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-lg text-[9px] font-black uppercase flex items-center gap-1">
+                    <Award size={10} /> Pro
+                  </div>
+                )}
+              </div>
+              <p className="text-orange-100 text-sm font-semibold mb-2">
+                {userData?.phone || userData?.email}
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <TrendingUp size={14} />
+                  <span className="text-xs font-bold">{userData?.reliabilityScore || 100}% Trust</span>
+                </div>
+                <div className="h-4 w-px bg-white/30" />
+                <div className="flex items-center gap-1">
+                  <Car size={14} />
+                  <span className="text-xs font-bold">{offeredCommutes.length} Routes</span>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Wallet Card */}
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 flex items-center justify-between cursor-pointer hover:bg-white/15 transition"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                <Wallet size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-black text-orange-100 tracking-wider">Wallet Balance</p>
+                <p className="text-2xl font-black">₹{userData?.walletBalance || 0}</p>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-white/60" />
+          </motion.div>
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-4 -mt-6 space-y-4">
+      <main className="max-w-3xl mx-auto px-4 -mt-10 space-y-4">
         
-        {/* TABS NAVIGATION */}
-        <div className="bg-white p-2 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-1 overflow-x-auto scrollbar-none">
-          <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${activeTab === 'profile' ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <User size={15} /> <span>Profile</span>
+        {/* MODERN TABS NAVIGATION */}
+        <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-3xl border border-gray-200/50 shadow-xl flex items-center gap-1.5">
+          <button 
+            onClick={() => setActiveTab('profile')} 
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[20px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
+              activeTab === 'profile' 
+                ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30' 
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <User size={16} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Profile</span>
           </button>
-          <button onClick={() => setActiveTab('commutes')} className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${activeTab === 'commutes' ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <Car size={15} /> <span>Commutes</span>
+          <button 
+            onClick={() => setActiveTab('commutes')} 
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[20px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
+              activeTab === 'commutes' 
+                ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30' 
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Car size={16} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Rides</span>
           </button>
-          <button onClick={() => setActiveTab('chats')} className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${activeTab === 'chats' ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <MessageSquare size={15} /> <span>Chats</span>
+          <button 
+            onClick={() => setActiveTab('chats')} 
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[20px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
+              activeTab === 'chats' 
+                ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30' 
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <MessageSquare size={16} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Chats</span>
           </button>
-          <button onClick={() => setActiveTab('verification')} className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${activeTab === 'verification' ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <ShieldCheck size={15} /> <span>Verification</span>
+          <button 
+            onClick={() => setActiveTab('verification')} 
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[20px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
+              activeTab === 'verification' 
+                ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30' 
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Shield size={16} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Verify</span>
           </button>
         </div>
 
         {/* TAB 1: PROFILE & EDIT */}
-        {activeTab === 'profile' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
-              {!isEditing ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                    <h3 className="font-black text-gray-900 text-sm uppercase">Personal Info</h3>
-                    <button onClick={() => setIsEditing(true)} className="flex items-center gap-1 text-orange-600 text-xs font-bold bg-orange-50 px-3 py-1.5 rounded-xl hover:bg-orange-100 cursor-pointer">
-                      <Edit3 size={14} /> Edit
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Age</p>
-                      <p className="text-sm font-extrabold text-gray-900">{userData?.age ? `${userData.age} yrs` : 'Not Set'}</p>
+        <AnimatePresence mode="wait">
+          {activeTab === 'profile' && (
+            <motion.div 
+              key="profile"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
+              {/* Personal Info Card */}
+              <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-gray-200/50 shadow-lg">
+                {!isEditing ? (
+                  <div className="space-y-5">
+                    <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                      <div>
+                        <h3 className="font-black text-gray-900 text-base">Personal Details</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Your profile information</p>
+                      </div>
+                      <motion.button 
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsEditing(true)} 
+                        className="flex items-center gap-2 text-orange-600 text-xs font-black bg-orange-50 px-4 py-2 rounded-xl hover:bg-orange-100 cursor-pointer transition"
+                      >
+                        <Edit3 size={14} /> EDIT
+                      </motion.button>
                     </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Gender</p>
-                      <p className="text-sm font-extrabold text-gray-900 capitalize">{userData?.gender || 'Not Set'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Vehicle Number</p>
-                      <p className="text-sm font-extrabold text-gray-900">{userData?.vehicleNumber || 'Not Added'}</p>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Phone size={14} className="text-orange-500" />
+                          <p className="text-[10px] text-gray-400 font-black uppercase">Phone</p>
+                        </div>
+                        <p className="text-sm font-black text-gray-900">{userData?.phone || 'Not set'}</p>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User size={14} className="text-orange-500" />
+                          <p className="text-[10px] text-gray-400 font-black uppercase">Age</p>
+                        </div>
+                        <p className="text-sm font-black text-gray-900">{userData?.age ? `${userData.age} years` : 'Not set'}</p>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User size={14} className="text-orange-500" />
+                          <p className="text-[10px] text-gray-400 font-black uppercase">Gender</p>
+                        </div>
+                        <p className="text-sm font-black text-gray-900 capitalize">{userData?.gender || 'Not set'}</p>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Car size={14} className="text-orange-500" />
+                          <p className="text-[10px] text-gray-400 font-black uppercase">Vehicle</p>
+                        </div>
+                        <p className="text-sm font-black text-gray-900">{userData?.vehicleNumber || 'Not added'}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                    <h3 className="font-black text-gray-900 text-sm uppercase">Edit Profile</h3>
-                    <button type="button" onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-red-500 cursor-pointer">
-                      <X size={20} />
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <input type="text" placeholder="Full Name" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-orange-500" required />
-                    <input type="text" placeholder="Mobile Number" value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-orange-500" required />
-                    <div className="flex gap-3">
-                      <input type="number" placeholder="Age" value={editForm.age} onChange={(e) => setEditForm({...editForm, age: e.target.value})} className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-orange-500" />
-                      <select value={editForm.gender} onChange={(e) => setEditForm({...editForm, gender: e.target.value})} className="w-2/3 bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-orange-500">
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
+                ) : (
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                      <div>
+                        <h3 className="font-black text-gray-900 text-base">Edit Profile</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Update your information</p>
+                      </div>
+                      <motion.button 
+                        whileTap={{ scale: 0.95 }}
+                        type="button" 
+                        onClick={() => setIsEditing(false)} 
+                        className="text-gray-400 hover:text-red-500 cursor-pointer transition"
+                      >
+                        <X size={22} strokeWidth={2.5} />
+                      </motion.button>
                     </div>
-                    <input type="text" placeholder="Vehicle Number (e.g. MP20 AB 1234)" value={editForm.vehicleNumber} onChange={(e) => setEditForm({...editForm, vehicleNumber: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-orange-500" />
-                  </div>
-                  <button type="submit" disabled={savingProfile} className="w-full py-3 bg-orange-500 text-white font-black uppercase text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-orange-600 cursor-pointer disabled:opacity-50">
-                    {savingProfile ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Changes
-                  </button>
-                </form>
-              )}
-            </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1.5 block">Full Name</label>
+                        <input 
+                          type="text" 
+                          placeholder="Enter your name" 
+                          value={editForm.name} 
+                          onChange={(e) => setEditForm({...editForm, name: e.target.value})} 
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition" 
+                          required 
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1.5 block">Phone Number</label>
+                        <input 
+                          type="text" 
+                          placeholder="Enter phone number" 
+                          value={editForm.phone} 
+                          onChange={(e) => setEditForm({...editForm, phone: e.target.value})} 
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition" 
+                          required 
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1.5 block">Age</label>
+                          <input 
+                            type="number" 
+                            placeholder="Age" 
+                            value={editForm.age} 
+                            onChange={(e) => setEditForm({...editForm, age: e.target.value})} 
+                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1.5 block">Gender</label>
+                          <select 
+                            value={editForm.gender} 
+                            onChange={(e) => setEditForm({...editForm, gender: e.target.value})} 
+                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                          >
+                            <option value="">Select</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1.5 block">Vehicle Number</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. MP20 AB 1234" 
+                          value={editForm.vehicleNumber} 
+                          onChange={(e) => setEditForm({...editForm, vehicleNumber: e.target.value})} 
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition" 
+                        />
+                      </div>
+                    </div>
+                    
+                    <motion.button 
+                      whileTap={{ scale: 0.98 }}
+                      type="submit" 
+                      disabled={savingProfile} 
+                      className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black uppercase tracking-wider rounded-2xl text-sm shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-orange-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {savingProfile ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={18} />
+                          Save Changes
+                        </>
+                      )}
+                    </motion.button>
+                  </form>
+                )}
+              </div>
 
-            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-4 text-red-500 font-bold text-xs bg-white rounded-3xl border border-gray-200 shadow-sm hover:bg-red-50 transition-colors cursor-pointer">
-              <LogOut size={16} /> LOGOUT
-            </button>
-          </motion.div>
-        )}
+              {/* Logout Button */}
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={handleLogout} 
+                className="w-full flex items-center justify-center gap-3 p-4 text-red-600 font-black text-sm bg-white/80 backdrop-blur-xl rounded-3xl border border-red-200/50 shadow-lg hover:bg-red-50 transition-all"
+              >
+                <LogOut size={18} strokeWidth={2.5} />
+                <span className="uppercase tracking-wider">Logout</span>
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* TAB 2: MY COMMUTES */}
         {activeTab === 'commutes' && (
@@ -340,63 +567,106 @@ const [activeChatPeerId, setActiveChatPeerId] = useState(null);
           </motion.div>
         )}
 
-        {/* TAB 3: CHATS (Now with Loading Spinner and Real Data) */}
-        {activeTab === 'chats' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden p-2">
-              
-              <div className="px-4 pt-3 pb-2 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="font-black text-gray-900 text-sm uppercase">Recent Messages</h3>
-              </div>
-
-              {chatsLoading ? (
-                <div className="p-8 flex flex-col items-center justify-center text-gray-400">
-                  <Loader2 size={30} className="animate-spin mb-2 text-orange-500" />
-                  <p className="text-xs font-semibold">Loading your chats...</p>
-                </div>
-              ) : recentChats.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">
-                  <MessageSquare size={30} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-xs font-semibold">No messages yet</p>
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  {recentChats.map((chat, idx) => (
-                    <div 
-                      key={idx} 
-                    onClick={() => setActiveChatPeerId(chat.peerId)}
-                      className="flex items-center gap-3 p-3 hover:bg-orange-50 cursor-pointer transition border-b last:border-0 border-gray-50 rounded-xl"
-                    >
-                      <div className="h-12 w-12 rounded-full bg-orange-100 text-orange-600 flex justify-center items-center font-black flex-shrink-0">
-                        {chat.name ? chat.name[0].toUpperCase() : "U"}
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex justify-between items-center mb-0.5">
-                          <h4 className="text-sm font-bold text-gray-900 truncate">{chat.name}</h4>
-                          <span className="text-[10px] font-semibold text-gray-400">
-                            {/* NEW: Sahi Date Formatting */}
-                            {chat.time ? new Date(chat.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </span>
-                        </div>
-                        <p className={`text-xs truncate ${chat.unread > 0 ? 'text-gray-900 font-bold' : 'text-gray-500'}`}>
-                          {chat.lastMessage}
-                        </p>
-                      </div>
-                      {chat.unread > 0 ? (
-                        <div className="h-5 w-5 bg-orange-500 rounded-full flex justify-center items-center text-[10px] text-white font-black flex-shrink-0">
-                          {chat.unread}
-                        </div>
-                      ) : (
-                        <ChevronRight size={16} className="text-gray-300" />
-                      )}
+        {/* TAB 3: CHATS */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'chats' && (
+            <motion.div 
+              key="chats"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-3"
+            >
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-gray-200/50 shadow-lg overflow-hidden">
+                
+                <div className="px-5 py-4 bg-gradient-to-r from-orange-50 to-white border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-black text-gray-900 text-base">Your Messages</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">Recent conversations</p>
                     </div>
-                  ))}
+                    <div className="h-10 w-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                      <MessageSquare size={18} strokeWidth={2.5} />
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-        
+
+                {chatsLoading ? (
+                  <div className="p-12 flex flex-col items-center justify-center">
+                    <Loader2 size={32} className="animate-spin mb-3 text-orange-500" />
+                    <p className="text-sm font-semibold text-gray-600">Loading chats...</p>
+                  </div>
+                ) : recentChats.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="h-16 w-16 rounded-full bg-gray-100 text-gray-300 flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare size={28} />
+                    </div>
+                    <h4 className="font-black text-gray-900 text-sm mb-1">No messages yet</h4>
+                    <p className="text-xs text-gray-500">Start chatting with commuters</p>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="mt-6 p-4 bg-orange-50 rounded-2xl border border-orange-100"
+                    >
+                      <p className="text-xs text-orange-800 font-semibold">
+                        💡 <strong>Tip:</strong> Use the floating chat button at the bottom right to start conversations!
+                      </p>
+                    </motion.div>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {recentChats.map((chat, idx) => (
+                      <motion.div
+                        key={idx}
+                        whileHover={{ backgroundColor: '#fff7ed' }}
+                        onClick={() => setActiveChatPeerId(chat.peerId)}
+                        className="flex items-center gap-4 p-4 cursor-pointer transition-colors group"
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                            {chat.name ? chat.name[0].toUpperCase() : "U"}
+                          </div>
+                          {chat.unread > 0 && (
+                            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-black border-2 border-white shadow-lg">
+                              {chat.unread}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 overflow-hidden">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="text-sm font-black text-gray-900 truncate group-hover:text-orange-600 transition">
+                              {chat.name}
+                            </h4>
+                            <span className="text-[10px] font-semibold text-gray-400">
+                              {chat.time ? new Date(chat.time).toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              }) : ''}
+                            </span>
+                          </div>
+                          <p className={`text-xs truncate ${
+                            chat.unread > 0 ? 'text-gray-900 font-bold' : 'text-gray-500'
+                          }`}>
+                            {chat.lastMessage}
+                          </p>
+                        </div>
+
+                        <ChevronRight 
+                          size={18} 
+                          className="text-gray-300 group-hover:text-orange-500 transition flex-shrink-0" 
+                          strokeWidth={2.5}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* TAB 4: VERIFICATION */}
         {activeTab === 'verification' && (

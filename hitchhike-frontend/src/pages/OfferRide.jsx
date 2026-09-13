@@ -34,7 +34,6 @@ const Toggle = ({ checked, onChange, label }) => (
 const OfferRide = () => {
   // Form States
   const [vehicleName, setVehicleName] = useState('');
-  const [fare, setFare] = useState(''); 
   const [selectedDays, setSelectedDays] = useState(['mon', 'tue', 'wed', 'thu', 'fri']); // Default Weekdays
   const [reachTime, setReachTime] = useState('09:30'); // Default Office Time
   const [hasHelmet, setHasHelmet] = useState(true);
@@ -109,7 +108,7 @@ const OfferRide = () => {
   };
 
 const handlePublish = async () => {
-    if (!pickup || !drop || !fare || selectedDays.length === 0 || !reachTime) {
+    if (!pickup || !drop || selectedDays.length === 0 || !reachTime) {
       alert("Please fill all details, select days/time, and choose locations on the map!");
       return;
     }
@@ -127,7 +126,6 @@ const handlePublish = async () => {
         startPoint: { coordinates: [pickup.lng, pickup.lat], address: "Pickup Location" },
         endPoint: { coordinates: [drop.lng, drop.lat], address: "Drop Location" },
         routePoints: routePoints, 
-        farePerKm: Number(fare),
         expectedDistance: Number(expectedDistanceKm),
         days: selectedDays,
         reachTime: reachTime,
@@ -151,7 +149,7 @@ const handlePublish = async () => {
         return;
       }
       
-      alert("Commute Published Successfully! Live Tracking Started.");
+      alert("Commute Published Successfully! Fare will be discussed in chat with passengers.");
       startTracking(publishedId);
       
     } catch (error) {
@@ -221,16 +219,8 @@ const handlePublish = async () => {
              type="text" 
              placeholder="Vehicle e.g. TVS Wego" 
              value={vehicleName}
-             className="w-full mb-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500" 
-             onChange={(e) => setVehicleName(e.target.value)} 
-           />
-           <input 
-             type="number" 
-             placeholder="Fare per km (e.g. 5)" 
-             value={fare}
              className="w-full mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500" 
-             onChange={(e) => setFare(e.target.value)} 
-             required
+             onChange={(e) => setVehicleName(e.target.value)} 
            />
 
            {/* NAYA: Days Selector */}

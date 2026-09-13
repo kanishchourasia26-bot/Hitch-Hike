@@ -86,34 +86,25 @@ const startRide = async (req, res) => {
 };
 
 /**
- * @desc    End ride & Calculate Fare (Rider)
+ * @desc    End ride (Rider)
+ * @note    Fare negotiation happens via chat - no automatic payment deduction
  */
 const endRide = async (req, res) => {
     try {
-        const { bookingId, actualTraveledDistance } = req.body;
+        const { bookingId } = req.body;
         const booking = await Booking.findById(bookingId).populate({
             path: 'ride',
             populate: { path: 'publisher' }
         });
         
-        const rider = await User.findById(booking.ride.publisher._id);
-        const passenger = await User.findById(booking.passenger);
-
-        // Fare Calculation: Using ride.fare as base, or per km if defined
-        const finalFare = actualTraveledDistance * 4; 
-
-        if (passenger.walletBalance < finalFare) {
-            return res.status(400).json({ error: 'Insufficient wallet balance' });
+        if (!booking) {
+            return res.status(404).json({ error: 'Booking not found' });
         }
 
-        passenger.walletBalance -= finalFare;
-        rider.walletBalance += finalFare;
-        
-        await passenger.save();
-        await rider.save();
+        // Just mark ride as completed - fare already negotiated in chat
         await Ride.findByIdAndUpdate(booking.ride._id, { status: 'completed' });
 
-        res.status(200).json({ message: 'Ride completed', finalFare });
+        res.status(200).json({ message: 'Ride completed successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

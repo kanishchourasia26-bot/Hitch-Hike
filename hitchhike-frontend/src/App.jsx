@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import BottomNav from "./components/BottomNav";
 import PrivateRoute from './components/PrivateRoute';
 import LiveRidePanel from './components/LiveRidePanel';
+import FloatingChatButton from './components/FloatingChatButton';
 
 // Import all pages
 import Home from './pages/Home';
@@ -38,6 +38,9 @@ function App() {
         </Routes>
         
         <BottomNav />
+        
+        {/* 🔥 FLOATING CHAT BUTTON - Shows on all protected pages 🔥 */}
+        <FloatingChatButton />
       </div>
     </Router>
   );

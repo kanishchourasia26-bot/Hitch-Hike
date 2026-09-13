@@ -72,7 +72,6 @@ const createRide = async (req, res) => {
       reachTime,
       vehicleName: vehicleName || 'Commuter Vehicle',
       womenOnly: womenOnly || false,
-      farePerKm: 6,         
       expectedDistance: expectedDistance || 0,  
       status: 'active'
     });

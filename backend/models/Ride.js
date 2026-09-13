@@ -55,10 +55,6 @@ const rideSchema = new mongoose.Schema(
       default: false
     },
     
-    farePerKm: {
-      type: Number,
-      default: 6,
-    },
     expectedDistance: {
       type: Number,
       default: 0,

@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
+const { generateOTP, generateOTPExpiry } = require('../utils/otpGenerator');
+const { sendOTPEmail, sendWelcomeEmail } = require('../services/emailService');
 
 /**
  * Helper: sign a JWT for a given user id
@@ -12,9 +15,263 @@ const generateToken = (userId) => {
 };
 
 /**
- * @route   POST /api/users/register
- * @desc    Register a new user (rider or passenger)
+ * @route   POST /api/users/send-otp
+ * @desc    Send OTP to email for registration
  * @access  Public
+ */
+const sendOTP = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ message: 'A user with this email already exists' });
+    }
+
+    // Delete any existing OTPs for this email
+    await OTP.deleteMany({ email: email.toLowerCase() });
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const expiresAt = generateOTPExpiry();
+
+    // Save OTP to database
+    await OTP.create({
+      email: email.toLowerCase(),
+      otp,
+      expiresAt,
+    });
+
+    // Send OTP email
+    await sendOTPEmail(email, otp, name || 'User');
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent successfully to your email',
+      expiresIn: '10 minutes',
+    });
+  } catch (error) {
+    console.error('sendOTP error:', error);
+    return res.status(500).json({ 
+      message: 'Failed to send OTP. Please try again.',
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * @route   POST /api/users/verify-otp
+ * @desc    Verify OTP and register user
+ * @access  Public
+ */
+const verifyOTPAndRegister = async (req, res) => {
+  try {
+    const { email, otp, name, phone, password, role } = req.body;
+
+    // Validate required fields
+    if (!email || !otp || !phone || !password || !role) {
+      return res.status(400).json({ 
+        message: 'Email, OTP, phone, password, and role are required' 
+      });
+    }
+
+    if (!['rider', 'passenger'].includes(role)) {
+      return res.status(400).json({ 
+        message: 'Role must be either "rider" or "passenger"' 
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        message: 'Password must be at least 6 characters long' 
+      });
+    }
+
+    // Find OTP record
+    const otpRecord = await OTP.findOne({ 
+      email: email.toLowerCase(),
+      verified: false 
+    }).sort({ createdAt: -1 }); // Get the latest OTP
+
+    if (!otpRecord) {
+      return res.status(400).json({ 
+        message: 'OTP not found or already used. Please request a new OTP.' 
+      });
+    }
+
+    // Check if OTP is expired
+    if (otpRecord.isExpired()) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({ 
+        message: 'OTP has expired. Please request a new one.' 
+      });
+    }
+
+    // Check attempts (max 5 attempts)
+    if (otpRecord.attempts >= 5) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(429).json({ 
+        message: 'Too many incorrect attempts. Please request a new OTP.' 
+      });
+    }
+
+    // Verify OTP
+    if (otpRecord.otp !== otp) {
+      await otpRecord.incrementAttempts();
+      return res.status(400).json({ 
+        message: `Invalid OTP. ${5 - otpRecord.attempts - 1} attempts remaining.` 
+      });
+    }
+
+    // OTP is valid - Mark as verified
+    otpRecord.verified = true;
+    await otpRecord.save();
+
+    // Check if user already exists (double-check)
+    const existingUser = await User.findOne({ 
+      $or: [{ email: email.toLowerCase() }, { phone }] 
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ 
+        message: 'A user with this email or phone already exists' 
+      });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const user = await User.create({
+      name: name || 'User',
+      email: email.toLowerCase(),
+      phone,
+      password: hashedPassword,
+      role,
+    });
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(email, name || 'User').catch(err => {
+      console.error('Welcome email failed:', err);
+    });
+
+    // Delete used OTP
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Registration successful! Welcome to Hitchhike!',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAadhaarVerified: user.isAadhaarVerified,
+        isDLVerified: user.isDlVerified,
+        reliabilityScore: user.reliabilityScore,
+        walletBalance: user.walletBalance,
+      },
+    });
+  } catch (error) {
+    console.error('verifyOTPAndRegister error:', error);
+    
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({ 
+        message: `An account with this ${field} already exists.` 
+      });
+    }
+    
+    return res.status(500).json({ 
+      message: 'Server error during registration',
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * @route   POST /api/users/resend-otp
+ * @desc    Resend OTP to email
+ * @access  Public
+ */
+const resendOTP = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ message: 'A user with this email already exists' });
+    }
+
+    // Check last OTP time to prevent spam (min 30 seconds between requests)
+    const recentOTP = await OTP.findOne({ 
+      email: email.toLowerCase() 
+    }).sort({ createdAt: -1 });
+
+    if (recentOTP && (Date.now() - recentOTP.createdAt.getTime() < 30000)) {
+      return res.status(429).json({ 
+        message: 'Please wait 30 seconds before requesting a new OTP' 
+      });
+    }
+
+    // Delete old OTPs
+    await OTP.deleteMany({ email: email.toLowerCase() });
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const expiresAt = generateOTPExpiry();
+
+    // Save OTP
+    await OTP.create({
+      email: email.toLowerCase(),
+      otp,
+      expiresAt,
+    });
+
+    // Send OTP email
+    await sendOTPEmail(email, otp, name || 'User');
+
+    return res.status(200).json({
+      success: true,
+      message: 'New OTP sent successfully',
+      expiresIn: '10 minutes',
+    });
+  } catch (error) {
+    console.error('resendOTP error:', error);
+    return res.status(500).json({ 
+      message: 'Failed to resend OTP',
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * @route   POST /api/users/register
+ * @desc    Register a new user (LEGACY - kept for backward compatibility)
+ * @access  Public
+ * @deprecated Use send-otp and verify-otp endpoints instead
  */
 const registerUser = async (req, res) => {
   console.log("DEBUG: Incoming Request Body:", req.body); 
@@ -260,14 +517,15 @@ const verifyUser = async (req, res) => {
 };
 // Yahan neeche verifyUser ko export karna mat bhoolna!
 // module.exports = { ...tere purane functions, verifyUser };
-// All exports cleanly mapped
 // All exports cleanly mapped for user controller
 module.exports = {
-  registerUser,
+  sendOTP,
+  verifyOTPAndRegister,
+  resendOTP,
+  registerUser, // Legacy endpoint
   loginUser,
   getMe,
   verifyDocuments,
   updateProfile,
-  verifyUser
-
+  verifyUser,
 };

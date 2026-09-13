@@ -1,16 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const { verifyUser } = require('../controllers/userController');
 const { 
+  sendOTP,
+  verifyOTPAndRegister,
+  resendOTP,
   registerUser, 
   loginUser, 
   getMe, 
   verifyDocuments, 
-  updateProfile // <-- Yeh zaroori hai
+  updateProfile,
+  verifyUser,
 } = require('../controllers/userController');
 
-const { protect } = require('../middleware/authMiddleware'); // Ensure correct path to middleware
+const {
+  initiateVerification,
+  handleCallback,
+  getVerificationStatus,
+} = require('../controllers/digilockerController');
 
+const { protect } = require('../middleware/authMiddleware');
+
+// OTP REGISTRATION FLOW (Recommended)
+// @route   POST /api/users/send-otp
+router.post('/send-otp', sendOTP);
+
+// @route   POST /api/users/verify-otp
+router.post('/verify-otp', verifyOTPAndRegister);
+
+// @route   POST /api/users/resend-otp
+router.post('/resend-otp', resendOTP);
+
+// LEGACY REGISTRATION (Kept for backward compatibility)
 // @route   POST /api/users/register
 router.post('/register', registerUser);
 
@@ -22,8 +42,21 @@ router.get('/me', protect, getMe);
 
 // @route   POST /api/users/verify
 router.post('/verify', protect, verifyDocuments);
-router.post('/verify', protect, verifyUser);
-// @route   PUT /api/users/profile (EDIT PROFILE ROUTE)
-router.put('/profile', protect, updateProfile); // <-- Naya route yahan add hua hai!
+
+// @route   POST /api/users/verify-user
+router.post('/verify-user', protect, verifyUser);
+
+// @route   PUT /api/users/profile
+router.put('/profile', protect, updateProfile);
+
+// DIGILOCKER KYC VERIFICATION
+// @route   GET /api/users/digilocker/initiate
+router.get('/digilocker/initiate', protect, initiateVerification);
+
+// @route   GET /api/users/digilocker/callback (Public - called by DigiLocker)
+router.get('/digilocker/callback', handleCallback);
+
+// @route   GET /api/users/digilocker/status
+router.get('/digilocker/status', protect, getVerificationStatus);
 
 module.exports = router;

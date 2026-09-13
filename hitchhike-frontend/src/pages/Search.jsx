@@ -4,18 +4,17 @@ import { motion } from "framer-motion";
 import { 
   ArrowLeft, Loader2, MapPin, Navigation, 
   Footprints, User, ShieldCheck, AlertCircle, 
-  RefreshCw, CheckCircle2, Clock, Calendar, MessageSquare
+  RefreshCw, CheckCircle2, Clock, Calendar
 } from 'lucide-react';
 import api from '../services/api_service';
 import MapComponent from '../components/MapComponent';
-import Chat from './Chat'; // 🔥 YAHAN CHAT IMPORT KIYA HAI 🔥
 
 function Search() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   // 🔥 CHAT MODAL KE LIYE STATE 🔥
-  const [activeChatPeerId, setActiveChatPeerId] = useState(null);
+  // Removed - now using floating chat button
 
   // 1. Safely Parse URL Parameters
   const pickUpLat = parseFloat(searchParams.get("pickuplat")) || 0;
@@ -41,7 +40,6 @@ function Search() {
   const [loading, setLoading] = useState(true);
   const [availableCommutes, setAvailableCommutes] = useState([]);
   const [tripDistance, setTripDistance] = useState(null);
-  const [estimatedFare, setEstimatedFare] = useState(null);
   const [bookingLoadingId, setBookingLoadingId] = useState(null);
 
   // 3. Auto-Search Commutes on Page Load
@@ -79,7 +77,6 @@ function Search() {
       if (osrmData.routes && osrmData.routes.length > 0) {
         const distKm = (osrmData.routes[0].distance / 1000).toFixed(1);
         setTripDistance(distKm);
-        setEstimatedFare(Math.round(distKm * 6)); 
       }
 
     } catch (error) {
@@ -247,10 +244,9 @@ function Search() {
                 </div>
 
                 <div className="text-right">
-                  <span className="text-gray-900 font-black text-2xl">
-                    ₹{estimatedFare || ride.farePerKm || 0}
-                  </span>
-                  <p className="text-[10px] text-gray-400 font-black uppercase">Est. Cost Share</p>
+                  <div className="px-3 py-1.5 bg-orange-50 rounded-xl border border-orange-200">
+                    <p className="text-[10px] text-orange-600 font-black uppercase">Fare via Chat</p>
+                  </div>
                 </div>
               </div>
 
@@ -282,23 +278,13 @@ function Search() {
                 </div>
               </div>
 
-              {/* 🔥 NEW ACTION BUTTONS ROW: DM & JOIN COMMUTE 🔥 */}
-              <div className="flex gap-3 mt-5 pt-4 border-t border-gray-100">
-                {/* 🔥 YAHAN ONCLICK CHANGE KIYA HAI 🔥 */}
-                <button
-                  onClick={() => setActiveChatPeerId(ride.publisher?._id || ride.publisher)}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-50 text-orange-600 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-orange-100 border border-orange-200 transition cursor-pointer"
-                >
-                  <MessageSquare size={16} />
-                  <span>DM</span>
-                </button>
-
-                {/* Join Commute Button */}
+              {/* Action Button */}
+              <div className="mt-5 pt-4 border-t border-gray-100">
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleBookSeat(ride._id)}
                   disabled={bookingLoadingId === ride._id}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl text-xs font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl text-xs font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
                 >
                   {bookingLoadingId === ride._id ? (
                     <>
@@ -318,14 +304,6 @@ function Search() {
           ))}
         </section>
       </main>
-
-      {/* 🔥 FLOATING CHATBOT / MODAL 🔥 */}
-      {activeChatPeerId && (
-        <Chat 
-          peerId={activeChatPeerId} 
-          onClose={() => setActiveChatPeerId(null)} 
-        />
-      )}
     </div>
   );
 }
