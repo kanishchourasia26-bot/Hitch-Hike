@@ -48,17 +48,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    aadhaarVerificationDate: {
-      type: Date,
-      default: null
-    },
     isDlVerified: {
       type: Boolean,
       default: false
-    },
-    dlVerificationDate: {
-      type: Date,
-      default: null
     },
     reliabilityScore: {
       type: Number,

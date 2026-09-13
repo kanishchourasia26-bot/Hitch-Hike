@@ -12,12 +12,6 @@ const {
   verifyUser,
 } = require('../controllers/userController');
 
-const {
-  initiateVerification,
-  handleCallback,
-  getVerificationStatus,
-} = require('../controllers/digilockerController');
-
 const { protect } = require('../middleware/authMiddleware');
 
 // OTP REGISTRATION FLOW (Recommended)
@@ -48,15 +42,5 @@ router.post('/verify-user', protect, verifyUser);
 
 // @route   PUT /api/users/profile
 router.put('/profile', protect, updateProfile);
-
-// DIGILOCKER KYC VERIFICATION
-// @route   GET /api/users/digilocker/initiate
-router.get('/digilocker/initiate', protect, initiateVerification);
-
-// @route   GET /api/users/digilocker/callback (Public - called by DigiLocker)
-router.get('/digilocker/callback', handleCallback);
-
-// @route   GET /api/users/digilocker/status
-router.get('/digilocker/status', protect, getVerificationStatus);
 
 module.exports = router;
