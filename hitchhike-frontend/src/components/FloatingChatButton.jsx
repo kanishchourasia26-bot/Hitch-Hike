@@ -168,15 +168,27 @@ const FloatingChatButton = () => {
       {/* ACTIVE CHAT WINDOW */}
       <AnimatePresence>
         {activeChatPeerId && (
-          <motion.div
-            initial={{ opacity: 0, x: 400 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 400 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed bottom-24 right-6 z-50 w-96 h-[600px] rounded-3xl shadow-2xl overflow-hidden"
-          >
-            <Chat peerId={activeChatPeerId} onClose={handleCloseActiveChat} />
-          </motion.div>
+          <>
+            {/* Mobile: Fullscreen overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={handleCloseActiveChat}
+            />
+            
+            {/* Chat Window */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed bottom-6 right-6 z-50 w-full h-full md:w-[400px] md:h-[600px] md:bottom-6 md:right-6 inset-0 md:inset-auto rounded-none md:rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <Chat peerId={activeChatPeerId} onClose={handleCloseActiveChat} />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

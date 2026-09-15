@@ -56,12 +56,12 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans pb-24 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-rose-50/20 text-slate-900 font-sans pb-24 overflow-hidden">
 
-      {/* Background decoration */}
+      {/* Refined background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
-        <div className="absolute top-1/4 -right-32 h-96 w-96 rounded-full bg-orange-100 blur-3xl" />
-        <div className="absolute bottom-1/4 -left-32 h-96 w-96 rounded-full bg-orange-50 blur-3xl" />
+        <div className="absolute top-1/4 -right-32 h-96 w-96 rounded-full bg-gradient-to-b from-orange-200 to-rose-200 blur-3xl" />
+        <div className="absolute bottom-1/4 -left-32 h-96 w-96 rounded-full bg-gradient-to-t from-teal-200 to-cyan-200 blur-3xl" />
       </div>
 
       <motion.main
@@ -78,15 +78,15 @@ const Home = () => {
         >
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-orange-500 rounded-xl flex items-center justify-center">
+            <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-rose-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
               <Car size={24} strokeWidth={2.5} className="text-white" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-gray-900">HITCHHIKE</h1>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">HITCHHIKE</h1>
           </div>
 
           {/* City Badge */}
           <div className="flex items-center gap-4">
-            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
               A CITY-ORIENTED BIKE POOL
             </div>
             
@@ -94,10 +94,10 @@ const Home = () => {
             <motion.button
               whileTap={{ scale: 0.92 }}
               onClick={() => navigate('/profile')}
-              className="relative h-10 w-10 rounded-xl bg-orange-500 text-white flex items-center justify-center font-black text-sm shadow-lg cursor-pointer"
+              className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-rose-500/30 cursor-pointer hover:shadow-xl transition-all duration-300"
             >
               {currentUser?.name ? currentUser.name[0].toUpperCase() : 'U'}
-              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white" />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
             </motion.button>
           </div>
         </motion.header>
@@ -109,72 +109,66 @@ const Home = () => {
           {/* LEFT SIDE - HERO TEXT */}
           <motion.div variants={itemVariants} className="space-y-8">
             
-            {/* Cities Badge */}
-            <div className="inline-flex items-center gap-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-              LIVE IN MUMBAI • PUNE • BENGALURU
-            </div>
-
+           
             {/* Main Heading */}
             <div className="space-y-2">
-              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-gray-900">
+              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-slate-900">
                 SPLIT
               </h2>
-              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-gray-900">
-                THE <span className="text-orange-500">RIDE.</span>
+              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 bg-clip-text text-transparent">
+                THE RIDE.
               </h2>
-              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-gray-300" style={{WebkitTextStroke: '2px #e5e7eb'}}>
+              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-slate-300" style={{WebkitTextStroke: '2px #cbd5e1'}}>
                 NOT THE
               </h2>
-              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-gray-300" style={{WebkitTextStroke: '2px #e5e7eb'}}>
+              <h2 className="text-7xl font-black tracking-tighter leading-[0.9] text-slate-300" style={{WebkitTextStroke: '2px #cbd5e1'}}>
                 VIBE.
               </h2>
             </div>
 
             {/* Description */}
-            <p className="text-gray-600 text-base leading-relaxed max-w-lg font-medium">
-              Hitchhike is a hyper-local bike-pool for daily commutes. Verified pods, 
-              women-only rides, spare helmet policy, and geofenced SOS — built for 
-              two-wheeler cities.
-            </p>
+          
 
-            {/* Feature Pills */}
+            {/* Feature Pills - Enhanced */}
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2">
-                <Shield size={16} className="text-orange-500" />
-                <span className="text-xs font-bold text-gray-700">Auto-SOS</span>
-              </div>
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2">
-                <Users size={16} className="text-orange-500" />
-                <span className="text-xs font-bold text-gray-700">Women-Only</span>
-              </div>
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2">
-                <ShieldCheck size={16} className="text-orange-500" />
-                <span className="text-xs font-bold text-gray-700">Verified Pods</span>
-              </div>
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2">
-                <TrendingDown size={16} className="text-orange-500" />
-                <span className="text-xs font-bold text-gray-700">₹2.5/km</span>
-              </div>
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-red-50 to-rose-50 border border-rose-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-rose-300 hover:shadow-lg hover:shadow-rose-200/50">
+                <Shield size={16} className="text-rose-500" />
+                <span className="text-xs font-bold text-slate-700">Auto-SOS</span>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/50">
+                <Users size={16} className="text-violet-500" />
+                <span className="text-xs font-bold text-slate-700">Women-Only</span>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-200/50">
+                <ShieldCheck size={16} className="text-emerald-500" />
+                <span className="text-xs font-bold text-slate-700">Verified Pods</span>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-amber-300 hover:shadow-lg hover:shadow-amber-200/50">
+                <TrendingDown size={16} className="text-amber-600" />
+                <span className="text-xs font-bold text-slate-700">₹2.5/km</span>
+              </motion.div>
             </div>
 
-            {/* CTA Buttons */}
+            {/* CTA Buttons - Enhanced */}
             <div className="flex gap-4 pt-4">
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(249, 115, 22, 0.4)' }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/book')}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-4 px-8 rounded-2xl font-black uppercase tracking-wider text-sm shadow-2xl shadow-orange-500/30 cursor-pointer transition flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white py-4 px-8 rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-rose-500/30 cursor-pointer transition flex items-center justify-center gap-2 border border-rose-400/20"
               >
                 <Search size={20} strokeWidth={2.5} />
                 Find Ride
               </motion.button>
               
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(14, 165, 233, 0.2)' }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/offer')}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 py-4 px-8 rounded-2xl font-black uppercase tracking-wider text-sm cursor-pointer transition flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-r from-cyan-50 to-teal-50 hover:from-cyan-100 hover:to-teal-100 border-2 border-teal-300 text-slate-900 py-4 px-8 rounded-2xl font-black uppercase tracking-wider text-sm cursor-pointer transition flex items-center justify-center gap-2"
               >
                 <Car size={20} strokeWidth={2.5} />
                 Offer Ride
@@ -185,47 +179,30 @@ const Home = () => {
           {/* RIGHT SIDE - ADVENTURE IMAGE */}
           <motion.div 
             variants={itemVariants}
-            className="relative"
+            className="relative -mt-24"
           >
-            {/* Main Image Card */}
-            <div className="relative bg-gradient-to-br from-orange-50 to-white border-2 border-orange-200 rounded-[40px] p-8 overflow-hidden shadow-2xl">
-              
-              {/* Adventure Image */}
-              <div className="relative aspect-square flex items-center justify-center">
-                <img 
-                  src={AdventureImg} 
-                  alt="Adventure Begins Outside the Comfort Zone" 
-                  className="w-full h-full object-contain"
-                />
-              </div>
+            {/* Adventure Image - No Box */}
+            <div className="relative">
+              <img 
+                src={AdventureImg} 
+                alt="Adventure Begins Outside the Comfort Zone" 
+                className="w-full h-auto object-contain drop-shadow-2xl"
+              />
+            </div>
 
-              {/* Stats Overlay */}
-              <div className="absolute bottom-8 left-8 right-8">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 text-center border border-orange-100 shadow-lg">
-                    <p className="text-2xl font-black text-orange-500">{offeredCommutes.length}</p>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase mt-1">Routes</p>
-                  </div>
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 text-center border border-orange-100 shadow-lg">
-                    <p className="text-2xl font-black text-orange-500">{userData?.reliabilityScore || 100}%</p>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase mt-1">Trust</p>
-                  </div>
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 text-center border border-orange-100 shadow-lg">
-                    <p className="text-2xl font-black text-orange-500">₹{userData?.walletBalance || 0}</p>
-                    <p className="text-[10px] text-gray-600 font-bold uppercase mt-1">Wallet</p>
-                  </div>
-                </div>
+            {/* Stats Overlay - Enhanced */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4">
+              <div className="grid grid-cols-3 gap-3">
+             
+                
+              
+                
+             
               </div>
             </div>
 
             {/* Floating Badge */}
-            <motion.div
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-4 -right-4 bg-green-500 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-2xl border-2 border-white"
-            >
-              ✓ Verified Rider
-            </motion.div>
+        
           </motion.div>
 
         </div>
@@ -236,38 +213,47 @@ const Home = () => {
           variants={itemVariants}
           className="mt-20 grid md:grid-cols-3 gap-6"
         >
-          {/* Feature 1 */}
-          <div className="bg-white border-2 border-orange-100 rounded-3xl p-6 hover:border-orange-300 hover:shadow-lg transition group">
-            <div className="h-12 w-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition">
-              <Route size={24} className="text-orange-500" strokeWidth={2} />
+          {/* Feature 1 - Routes */}
+          <motion.div 
+            whileHover={{ translateY: -8, boxShadow: '0 20px 40px rgba(20, 184, 166, 0.2)' }}
+            className="bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200/60 rounded-3xl p-6 hover:border-teal-300/50 transition-all group"
+          >
+            <div className="h-12 w-12 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-2xl flex items-center justify-center mb-4 group-hover:from-teal-200 group-hover:to-cyan-200 transition">
+              <Route size={24} className="text-teal-600" strokeWidth={2} />
             </div>
-            <h4 className="text-gray-900 font-black text-lg mb-2">Smart Matching</h4>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <h4 className="text-slate-900 font-black text-lg mb-2">Smart Matching</h4>
+            <p className="text-slate-600 text-sm leading-relaxed">
               AI finds commuters on overlapping routes automatically
             </p>
-          </div>
+          </motion.div>
 
-          {/* Feature 2 */}
-          <div className="bg-white border-2 border-orange-100 rounded-3xl p-6 hover:border-orange-300 hover:shadow-lg transition group">
-            <div className="h-12 w-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition">
-              <MessageSquare size={24} className="text-orange-500" strokeWidth={2} />
+          {/* Feature 2 - Chat */}
+          <motion.div 
+            whileHover={{ translateY: -8, boxShadow: '0 20px 40px rgba(139, 92, 246, 0.2)' }}
+            className="bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200/60 rounded-3xl p-6 hover:border-violet-300/50 transition-all group"
+          >
+            <div className="h-12 w-12 bg-gradient-to-br from-violet-100 to-purple-100 rounded-2xl flex items-center justify-center mb-4 group-hover:from-violet-200 group-hover:to-purple-200 transition">
+              <MessageSquare size={24} className="text-violet-600" strokeWidth={2} />
             </div>
-            <h4 className="text-gray-900 font-black text-lg mb-2">In-App Chat</h4>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <h4 className="text-slate-900 font-black text-lg mb-2">In-App Chat</h4>
+            <p className="text-slate-600 text-sm leading-relaxed">
               Negotiate fares and coordinate via secure messaging
             </p>
-          </div>
+          </motion.div>
 
-          {/* Feature 3 */}
-          <div className="bg-white border-2 border-orange-100 rounded-3xl p-6 hover:border-orange-300 hover:shadow-lg transition group">
-            <div className="h-12 w-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition">
-              <ShieldCheck size={24} className="text-orange-500" strokeWidth={2} />
+          {/* Feature 3 - Verification */}
+          <motion.div 
+            whileHover={{ translateY: -8, boxShadow: '0 20px 40px rgba(16, 185, 129, 0.2)' }}
+            className="bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200/60 rounded-3xl p-6 hover:border-emerald-300/50 transition-all group"
+          >
+            <div className="h-12 w-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:from-emerald-200 group-hover:to-teal-200 transition">
+              <ShieldCheck size={24} className="text-emerald-600" strokeWidth={2} />
             </div>
-            <h4 className="text-gray-900 font-black text-lg mb-2">Verified Trust</h4>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <h4 className="text-slate-900 font-black text-lg mb-2">Verified Trust</h4>
+            <p className="text-slate-600 text-sm leading-relaxed">
               Connect with verified members for safer commutes
             </p>
-          </div>
+          </motion.div>
         </motion.div>
 
       </motion.main>

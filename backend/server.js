@@ -1,10 +1,12 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const rideRoutes = require('./routes/rideRoutes');
-const chatRoutes = require('./routes/chatRoutes'); // 🆕 NAYA: Chat Route Import
+const chatRoutes = require('./routes/chatRoutes');
+const kycRoutes = require('./routes/kycRoutes'); // KYC Route Import
 
 // Cron Job aur Model import
 const cron = require('node-cron');
@@ -21,6 +23,9 @@ connectDB();
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Serve static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // HTTP server banaya aur Socket.io initialize kiya
 const server = http.createServer(app);
@@ -93,45 +98,93 @@ io.on('connection', (socket) => {
   });
 
   // ----------------------------------------
-  // 💬 2. NAYA CHAT SYSTEM LOGIC
+  // 💬 2. ENHANCED CHAT SYSTEM LOGIC
   // ----------------------------------------
-  // User apna personal chat room join karega
+  
+  // User joins their personal chat room
   socket.on("join_chat", (userId) => {
     socket.join(userId);
     console.log(`💬 User ${userId} joined their personal chat room.`);
+    
+    // Broadcast online status
+    io.emit("user_online", { userId });
   });
 
-  // Message bhejne aur save karne ka logic
+  // User typing indicator
+  socket.on("typing", ({ userId, peerId }) => {
+    io.to(peerId).emit("typing", { userId });
+  });
+
+  // User stopped typing
+  socket.on("stop_typing", ({ userId, peerId }) => {
+    io.to(peerId).emit("stop_typing", { userId });
+  });
+
+  // Send and save message
   socket.on("send_message", async (data) => {
-    console.log("🔥 MESSAGE BACKEND PAR AAYA:", data);
+    console.log("🔥 MESSAGE RECEIVED:", data);
     try {
-      const { senderId, receiverId, text } = data;
+      const { senderId, receiverId, text, tempId } = data;
       
-      // A) Database mein save karo (History ke liye)
+      // Save message to database
       const newMessage = await Message.create({
         sender: senderId,
         receiver: receiverId,
-        text: text
+        text: text,
+        read: false,
+        deliveredAt: new Date()
       });
 
-      // B) Receiver ko real-time push notification (Socket) bhejo
-      io.to(receiverId).emit("receive_message", newMessage);
+      // Send delivery confirmation to sender
+      io.to(senderId).emit("message_delivered", { 
+        messageId: tempId,
+        dbId: newMessage._id 
+      });
+
+      // Send message to receiver in real-time
+      io.to(receiverId).emit("receive_message", {
+        ...newMessage.toObject(),
+        senderId: newMessage.sender,
+        receiverId: newMessage.receiver
+      });
       
     } catch (error) {
       console.error("Error saving message:", error);
+      io.to(data.senderId).emit("message_failed", { 
+        tempId: data.tempId,
+        error: "Failed to send message" 
+      });
     }
   });
 
-  // Jab user disconnect ho
+  // Message read receipt
+  socket.on("message_read", async ({ messageId, senderId }) => {
+    try {
+      await Message.findByIdAndUpdate(messageId, { 
+        read: true, 
+        readAt: new Date() 
+      });
+      
+      // Notify sender that message was read
+      io.to(senderId).emit("message_read", { messageId });
+    } catch (error) {
+      console.error("Error updating read status:", error);
+    }
+  });
+
+  // User disconnect - broadcast offline status
   socket.on('disconnect', () => {
     console.log('❌ User disconnected:', socket.id);
+    // Note: We'd need to track userId to socket.id mapping for this
+    // For simplicity, emitting generic offline event
   });
 });
 
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/rides', rideRoutes);
-app.use('/api/chats', chatRoutes); // 🆕 NAYA: Chat Route API
+app.use('/api/chats', chatRoutes);
+app.use('/api/users/kyc', kycRoutes); // KYC Route API
 
 const PORT = process.env.PORT || 5000;
 

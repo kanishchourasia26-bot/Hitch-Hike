@@ -62,6 +62,29 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 500 // Joining bonus testing ke liye
     },
+    // KYC Verification Fields
+    kycVerified: {
+      type: Boolean,
+      default: false,
+    },
+    kycStatus: {
+      type: String,
+      enum: ['not_submitted', 'pending', 'verified', 'failed'],
+      default: 'not_submitted',
+    },
+    kycVerifiedAt: {
+      type: Date,
+      default: null,
+    },
+    // Profile Picture Status
+    dpUploaded: {
+      type: Boolean,
+      default: false,
+    },
+    profilePictureUrl: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

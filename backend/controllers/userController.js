@@ -517,6 +517,62 @@ const verifyUser = async (req, res) => {
 };
 // Yahan neeche verifyUser ko export karna mat bhoolna!
 // module.exports = { ...tere purane functions, verifyUser };
+/**
+ * @route   POST /api/users/upload-dp
+ * @desc    Upload profile picture
+ * @access  Private
+ */
+const uploadProfilePicture = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Save file path (relative to backend folder)
+    const profilePictureUrl = `/uploads/profile-pictures/${req.file.filename}`;
+    
+    user.profilePictureUrl = profilePictureUrl;
+    user.dpUploaded = true;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile picture uploaded successfully!',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        profilePictureUrl: user.profilePictureUrl,
+        dpUploaded: user.dpUploaded,
+        role: user.role,
+        isAadhaarVerified: user.isAadhaarVerified,
+        isDlVerified: user.isDlVerified,
+        kycVerified: user.kycVerified,
+        kycStatus: user.kycStatus,
+        reliabilityScore: user.reliabilityScore,
+        walletBalance: user.walletBalance,
+        age: user.age,
+        gender: user.gender,
+      },
+    });
+  } catch (error) {
+    console.error(`uploadProfilePicture error: ${error.message}`);
+    return res.status(500).json({ 
+      message: 'Server error while uploading profile picture',
+      error: error.message 
+    });
+  }
+};
+
 // All exports cleanly mapped for user controller
 module.exports = {
   sendOTP,
@@ -528,4 +584,5 @@ module.exports = {
   verifyDocuments,
   updateProfile,
   verifyUser,
+  uploadProfilePicture,
 };
