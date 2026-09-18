@@ -719,7 +719,7 @@ const Profile = () => {
               />
             </div>
 //////////////
-            {/* KYC Status Result */}
+            {/* KYC Sta//////tus Result,,,,,,,, */}
             {kycStatus && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
