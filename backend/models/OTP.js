@@ -30,8 +30,9 @@ const otpSchema = new mongoose.Schema({
   },
 });
 
-// Index for faster queries
+// Indexes for faster queries and auto-deletion
 otpSchema.index({ email: 1, createdAt: -1 });
+otpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 600 }); // Auto-delete after 10 minutes
 
 // Method to check if OTP is expired
 otpSchema.methods.isExpired = function () {

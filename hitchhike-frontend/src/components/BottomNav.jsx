@@ -14,6 +14,10 @@ const TABS = [
 ];
 
 const BottomNav = () => {
+  // Don't render if not logged in
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-100 bg-white/95 backdrop-blur-md"

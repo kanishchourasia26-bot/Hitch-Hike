@@ -6,18 +6,10 @@ import {
   Loader2, Wallet, Edit3, Save, X, PlusCircle, ChevronRight,
   Bell, Settings, Award, TrendingUp, Clock, MapPin, Phone,
   Mail, Calendar as CalendarIcon, CheckCircle2, Shield, 
-  AlertTriangle, Siren, UserCheck, PhoneCall, MapPinned, FileCheck, Camera, Upload
+  AlertTriangle, Siren, UserCheck, PhoneCall, MapPinned
 } from 'lucide-react';
 
 import api from '../services/api_service';
-import KYCUpload from '../components/KYCUpload';
-
-// Helper to get full image URL
-const getImageUrl = (path) => {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  return `http://localhost:5000${path}`;
-};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -40,15 +32,6 @@ const Profile = () => {
   const [verifyGender, setVerifyGender] = useState('');
   const [dlInput, setDlInput] = useState('');
   const [verifying, setVerifying] = useState(false);
-
-  // KYC State
-  const [kycStatus, setKycStatus] = useState(null);
-  const [kycLoading, setKycLoading] = useState(false);
-
-  // Profile Picture State
-  const [uploadingDP, setUploadingDP] = useState(false);
-  const [dpPreview, setDpPreview] = useState(null);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -114,81 +97,6 @@ const Profile = () => {
       alert(error.response?.data?.message || "Verification failed");
     } finally {
       setVerifying(false);
-    }
-  };
-
-  const handleKYCUpload = async (formData) => {
-    setKycLoading(true);
-    try {
-      const response = await api.post('/users/kyc/verify', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      setKycStatus(response.data);
-      
-      if (response.data.verificationStatus === 'PASSED') {
-        alert('✅ KYC Verification Successful!');
-        fetchProfileData(); // Refresh user data
-      } else {
-        alert('❌ KYC Verification Failed: ' + response.data.message);
-      }
-    } catch (error) {
-      console.error('KYC Upload Error:', error);
-      alert('Failed to upload KYC document: ' + (error.response?.data?.message || error.message));
-      throw error;
-    } finally {
-      setKycLoading(false);
-    }
-  };
-
-  const handleProfilePictureUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      alert('Please upload JPG, PNG, or WEBP image only');
-      return;
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('File size must be less than 2MB');
-      return;
-    }
-
-    setUploadingDP(true);
-
-    try {
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setDpPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-
-      // Upload to server
-      const formData = new FormData();
-      formData.append('profilePicture', file);
-
-      const response = await api.post('/users/upload-dp', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      // Update user data
-      setUserData(response.data.user);
-      alert('✅ Profile picture updated successfully!');
-    } catch (error) {
-      console.error('Profile picture upload error:', error);
-      alert('Failed to upload profile picture: ' + (error.response?.data?.message || error.message));
-      setDpPreview(null);
-    } finally {
-      setUploadingDP(false);
     }
   };
 
@@ -262,40 +170,11 @@ const Profile = () => {
           {/* Profile Info */}
           <div className="flex items-start gap-4 mb-6">
             <div className="relative">
-              <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-white to-rose-100 text-rose-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-black/20 overflow-hidden">
-                {dpPreview || userData?.profilePictureUrl ? (
-                  <img 
-                    src={dpPreview || getImageUrl(userData?.profilePictureUrl)} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  userData?.name ? userData.name[0].toUpperCase() : "U"
-                )}
+              <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-white to-rose-100 text-rose-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-black/20">
+                {userData?.name ? userData.name[0].toUpperCase() : "U"}
               </div>
-              
-              {/* Upload Button */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingDP}
-                className="absolute -bottom-1 -right-1 h-7 w-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center border-2 border-white shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50"
-              >
-                {uploadingDP ? (
-                  <Loader2 size={12} className="text-white animate-spin" />
-                ) : (
-                  <Camera size={12} className="text-white" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/webp"
-                onChange={handleProfilePictureUpload}
-                className="hidden"
-              />
-              
               {(userData?.isAadhaarVerified || userData?.isDlVerified) && (
-                <div className="absolute -top-1 -left-1 h-7 w-7 bg-emerald-500 rounded-xl flex items-center justify-center border-2 border-white shadow-lg">
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-emerald-500 rounded-xl flex items-center justify-center border-2 border-white shadow-lg">
                   <CheckCircle2 size={14} className="text-white" />
                 </div>
               )}
@@ -382,17 +261,6 @@ const Profile = () => {
           >
             <Shield size={16} strokeWidth={2.5} />
             <span className="hidden sm:inline">Verify</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('kyc')} 
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[18px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
-              activeTab === 'kyc' 
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-400/30' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <FileCheck size={16} strokeWidth={2.5} />
-            <span className="hidden sm:inline">KYC</span>
           </button>
         </div>
 
@@ -681,121 +549,6 @@ const Profile = () => {
                   </button>
                 </form>
              )}
-          </motion.div>
-        )}
-
-        {/* TAB 4: KYC VERIFICATION */}
-        {activeTab === 'kyc' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            className="space-y-4"
-          >
-            {/* KYC Status Card */}
-            <div className="bg-white/90 p-6 rounded-2xl border border-slate-200 shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-black text-slate-900 text-sm uppercase">KYC Verification</h3>
-                <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg transition-colors duration-200 ${
-                  userData?.kycVerified 
-                    ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' 
-                    : userData?.kycStatus === 'pending'
-                    ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700'
-                    : 'bg-gradient-to-r from-slate-100 to-gray-100 text-slate-600'
-                }`}>
-                  {userData?.kycVerified ? '✓ Verified' : userData?.kycStatus === 'pending' ? '⏳ Pending' : 'Not Verified'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Upload your government ID (Aadhaar/DL) for automatic verification. 
-                Your data is encrypted and secure.
-              </p>
-            </div>
-
-            {/* KYC Upload Component */}
-            <div className="bg-white/90 p-6 rounded-2xl border border-slate-200 shadow-lg">
-              <KYCUpload 
-                onUpload={handleKYCUpload} 
-                userData={userData}
-              />
-            </div>
-////////////////////////||||||||//////
-            {/* KYC Sta//////tus Result,,,,,,,, */}
-            {kycStatus && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`p-6 rounded-2xl border-2 shadow-lg ${
-                  kycStatus.verificationStatus === 'PASSED'
-                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
-                    : 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300'
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                    kycStatus.verificationStatus === 'PASSED'
-                      ? 'bg-green-100'
-                      : 'bg-red-100'
-                  }`}>
-                    {kycStatus.verificationStatus === 'PASSED' ? (
-                      <CheckCircle2 size={28} className="text-green-600" />
-                    ) : (
-                      <AlertTriangle size={28} className="text-red-600" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h4 className={`font-black text-base mb-2 ${
-                      kycStatus.verificationStatus === 'PASSED' ? 'text-green-900' : 'text-red-900'
-                    }`}>
-                      {kycStatus.verificationStatus === 'PASSED' ? 'Verification Successful!' : 'Verification Failed'}
-                    </h4>
-                    <p className={`text-sm mb-4 ${
-                      kycStatus.verificationStatus === 'PASSED' ? 'text-green-700' : 'text-red-700'
-                    }`}>
-                      {kycStatus.message}
-                    </p>
-
-                    {kycStatus.extractedData && (
-                      <div className="bg-white/70 rounded-xl p-4 space-y-2 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Name on ID:</span>
-                          <span className="font-bold text-slate-900">{kycStatus.extractedData.nameOnId}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Calculated Age:</span>
-                          <span className="font-bold text-slate-900">{kycStatus.extractedData.calculatedAgeFromId} years</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Valid Document:</span>
-                          <span className={`font-bold ${kycStatus.extractedData.isValidDocument ? 'text-green-600' : 'text-red-600'}`}>
-                            {kycStatus.extractedData.isValidDocument ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {kycStatus.matchingDetails && (
-                      <div className="mt-3 bg-white/70 rounded-xl p-4 space-y-2 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Name Match:</span>
-                          <span className={`font-bold flex items-center gap-1 ${kycStatus.matchingDetails.isNameMatched ? 'text-green-600' : 'text-red-600'}`}>
-                            {kycStatus.matchingDetails.isNameMatched ? <CheckCircle2 size={14} /> : <X size={14} />}
-                            {kycStatus.matchingDetails.isNameMatched ? 'Matched' : 'Not Matched'}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Age Match:</span>
-                          <span className={`font-bold flex items-center gap-1 ${kycStatus.matchingDetails.isAgeMatched ? 'text-green-600' : 'text-red-600'}`}>
-                            {kycStatus.matchingDetails.isAgeMatched ? <CheckCircle2 size={14} /> : <X size={14} />}
-                            {kycStatus.matchingDetails.isAgeMatched ? 'Matched' : 'Not Matched'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
           </motion.div>
         )}
 

@@ -5,17 +5,32 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       trim: true,
+      required: [true, 'Name is required'],
     },
     email: {
       type: String,
+      required: [true, 'Email is required'],
+      unique: true,
       trim: true,
       lowercase: true,
+      validate: {
+        validator: function(v) {
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        },
+        message: props => `${props.value} is not a valid email address!`
+      }
     },
     phone: {
       type: String,
       required: [true, 'Phone number is required'],
       unique: true,
       trim: true,
+      validate: {
+        validator: function(v) {
+          return /^[0-9]{10}$/.test(v);
+        },
+        message: props => `${props.value} is not a valid 10-digit phone number!`
+      }
     },
     password: {
       type: String,
@@ -39,6 +54,8 @@ const userSchema = new mongoose.Schema(
     // NAYA: Profile edit ke liye age aur vehicleNumber add kiya
     age: {
       type: Number,
+      min: [18, 'You must be at least 18 years old'],
+      max: [100, 'Invalid age'],
     },
     vehicleNumber: {
       type: String,
@@ -61,29 +78,6 @@ const userSchema = new mongoose.Schema(
     walletBalance: {
       type: Number,
       default: 500 // Joining bonus testing ke liye
-    },
-    // KYC Verification Fields
-    kycVerified: {
-      type: Boolean,
-      default: false,
-    },
-    kycStatus: {
-      type: String,
-      enum: ['not_submitted', 'pending', 'verified', 'failed'],
-      default: 'not_submitted',
-    },
-    kycVerifiedAt: {
-      type: Date,
-      default: null,
-    },
-    // Profile Picture Status
-    dpUploaded: {
-      type: Boolean,
-      default: false,
-    },
-    profilePictureUrl: {
-      type: String,
-      default: null,
     },
   },
   {

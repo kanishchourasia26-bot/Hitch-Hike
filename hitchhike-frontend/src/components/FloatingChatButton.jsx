@@ -11,6 +11,10 @@ const FloatingChatButton = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Don't render if not logged in
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
   // Fetch recent chats when bubble opens
   useEffect(() => {
     if (isOpen && !activeChatPeerId) {

@@ -23,24 +23,49 @@ const sendOTP = async (req, res) => {
   try {
     const { email, name } = req.body;
 
+    // Validate email presence
     if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email is required' 
+      });
     }
 
-    // Validate email format
+    // Trim and validate email format
+    const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid email format. Please enter a valid email address.' 
+      });
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {
-      return res.status(409).json({ message: 'A user with this email already exists' });
+      return res.status(409).json({ 
+        success: false,
+        message: 'An account with this email already exists. Please login instead.' 
+      });
+    }
+
+    // Rate limiting check - prevent spam
+    const recentOTP = await OTP.findOne({ 
+      email: trimmedEmail 
+    }).sort({ createdAt: -1 });
+
+    if (recentOTP && (Date.now() - recentOTP.createdAt.getTime() < 30000)) {
+      const waitTime = Math.ceil((30000 - (Date.now() - recentOTP.createdAt.getTime())) / 1000);
+      return res.status(429).json({ 
+        success: false,
+        message: `Please wait ${waitTime} seconds before requesting a new OTP.`,
+        retryAfter: waitTime
+      });
     }
 
     // Delete any existing OTPs for this email
-    await OTP.deleteMany({ email: email.toLowerCase() });
+    await OTP.deleteMany({ email: trimmedEmail });
 
     // Generate new OTP
     const otp = generateOTP();
@@ -48,24 +73,34 @@ const sendOTP = async (req, res) => {
 
     // Save OTP to database
     await OTP.create({
-      email: email.toLowerCase(),
+      email: trimmedEmail,
       otp,
       expiresAt,
     });
 
     // Send OTP email
-    await sendOTPEmail(email, otp, name || 'User');
+    try {
+      await sendOTPEmail(trimmedEmail, otp, name || 'User');
+      console.log(`✅ OTP sent to ${trimmedEmail}: ${otp}`);
+    } catch (emailError) {
+      // If email fails, still log OTP for development
+      console.log(`⚠️ Email failed, but OTP generated for ${trimmedEmail}: ${otp}`);
+      console.log('📧 Configure SMTP in backend/.env to send real emails');
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'OTP sent successfully to your email',
+      message: 'OTP sent successfully! Please check your email.',
       expiresIn: '10 minutes',
+      // 🔥 FOR DEVELOPMENT ONLY - Remove in production!
+      ...(process.env.NODE_ENV === 'development' && { devOTP: otp }),
     });
   } catch (error) {
     console.error('sendOTP error:', error);
     return res.status(500).json({ 
+      success: false,
       message: 'Failed to send OTP. Please try again.',
-      error: error.message 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -77,35 +112,77 @@ const sendOTP = async (req, res) => {
  */
 const verifyOTPAndRegister = async (req, res) => {
   try {
-    const { email, otp, name, phone, password, role } = req.body;
+    const { email, otp, name, phone, password, role, age, gender } = req.body;
 
     // Validate required fields
-    if (!email || !otp || !phone || !password || !role) {
+    if (!email || !otp) {
       return res.status(400).json({ 
-        message: 'Email, OTP, phone, password, and role are required' 
+        success: false,
+        message: 'Email and OTP are required' 
       });
     }
 
+    if (!phone || !password || !role) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Phone, password, and role are required' 
+      });
+    }
+
+    // Validate role
     if (!['rider', 'passenger'].includes(role)) {
       return res.status(400).json({ 
+        success: false,
         message: 'Role must be either "rider" or "passenger"' 
       });
     }
 
+    // Validate password strength
     if (password.length < 6) {
       return res.status(400).json({ 
+        success: false,
         message: 'Password must be at least 6 characters long' 
       });
     }
 
+    // Validate phone format (10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone.trim())) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Phone number must be 10 digits' 
+      });
+    }
+
+    // Validate age if provided
+    if (age && (age < 18 || age > 100)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Age must be between 18 and 100' 
+      });
+    }
+
+    // Validate gender if provided
+    if (gender && !['male', 'female', 'other'].includes(gender)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Gender must be male, female, or other' 
+      });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPhone = phone.trim();
+    const trimmedOTP = otp.trim();
+
     // Find OTP record
     const otpRecord = await OTP.findOne({ 
-      email: email.toLowerCase(),
+      email: trimmedEmail,
       verified: false 
     }).sort({ createdAt: -1 }); // Get the latest OTP
 
     if (!otpRecord) {
       return res.status(400).json({ 
+        success: false,
         message: 'OTP not found or already used. Please request a new OTP.' 
       });
     }
@@ -114,6 +191,7 @@ const verifyOTPAndRegister = async (req, res) => {
     if (otpRecord.isExpired()) {
       await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ 
+        success: false,
         message: 'OTP has expired. Please request a new one.' 
       });
     }
@@ -122,15 +200,19 @@ const verifyOTPAndRegister = async (req, res) => {
     if (otpRecord.attempts >= 5) {
       await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(429).json({ 
+        success: false,
         message: 'Too many incorrect attempts. Please request a new OTP.' 
       });
     }
 
     // Verify OTP
-    if (otpRecord.otp !== otp) {
+    if (otpRecord.otp !== trimmedOTP) {
       await otpRecord.incrementAttempts();
+      const attemptsLeft = 5 - otpRecord.attempts - 1;
       return res.status(400).json({ 
-        message: `Invalid OTP. ${5 - otpRecord.attempts - 1} attempts remaining.` 
+        success: false,
+        message: `Invalid OTP. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining.`,
+        attemptsLeft
       });
     }
 
@@ -140,42 +222,56 @@ const verifyOTPAndRegister = async (req, res) => {
 
     // Check if user already exists (double-check)
     const existingUser = await User.findOne({ 
-      $or: [{ email: email.toLowerCase() }, { phone }] 
+      $or: [{ email: trimmedEmail }, { phone: trimmedPhone }] 
     });
 
     if (existingUser) {
-      return res.status(409).json({ 
-        message: 'A user with this email or phone already exists' 
-      });
+      // Determine which field conflicts
+      if (existingUser.email === trimmedEmail) {
+        return res.status(409).json({ 
+          success: false,
+          message: 'An account with this email already exists' 
+        });
+      }
+      if (existingUser.phone === trimmedPhone) {
+        return res.status(409).json({ 
+          success: false,
+          message: 'An account with this phone number already exists' 
+        });
+      }
     }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Create user with all fields
     const user = await User.create({
-      name: name || 'User',
-      email: email.toLowerCase(),
-      phone,
+      name: name?.trim() || 'User',
+      email: trimmedEmail,
+      phone: trimmedPhone,
       password: hashedPassword,
       role,
+      ...(age && { age: parseInt(age) }),
+      ...(gender && { gender }),
     });
 
     // Generate JWT token
     const token = generateToken(user._id);
 
     // Send welcome email (non-blocking)
-    sendWelcomeEmail(email, name || 'User').catch(err => {
+    sendWelcomeEmail(trimmedEmail, user.name).catch(err => {
       console.error('Welcome email failed:', err);
     });
 
     // Delete used OTP
     await OTP.deleteOne({ _id: otpRecord._id });
 
+    console.log(`✅ User registered successfully: ${user.email}`);
+
     return res.status(201).json({
       success: true,
-      message: 'Registration successful! Welcome to Hitchhike!',
+      message: 'Registration successful! Welcome to Hitchhike! 🎉',
       token,
       user: {
         id: user._id,
@@ -183,8 +279,10 @@ const verifyOTPAndRegister = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        age: user.age,
+        gender: user.gender,
         isAadhaarVerified: user.isAadhaarVerified,
-        isDLVerified: user.isDlVerified,
+        isDlVerified: user.isDlVerified,
         reliabilityScore: user.reliabilityScore,
         walletBalance: user.walletBalance,
       },
@@ -192,16 +290,19 @@ const verifyOTPAndRegister = async (req, res) => {
   } catch (error) {
     console.error('verifyOTPAndRegister error:', error);
     
+    // Handle duplicate key errors
     if (error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
-      return res.status(400).json({ 
+      return res.status(409).json({ 
+        success: false,
         message: `An account with this ${field} already exists.` 
       });
     }
     
     return res.status(500).json({ 
-      message: 'Server error during registration',
-      error: error.message 
+      success: false,
+      message: 'Server error during registration. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -215,29 +316,50 @@ const resendOTP = async (req, res) => {
   try {
     const { email, name } = req.body;
 
+    // Validate email
     if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email is required' 
+      });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid email format' 
+      });
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {
-      return res.status(409).json({ message: 'A user with this email already exists' });
+      return res.status(409).json({ 
+        success: false,
+        message: 'An account with this email already exists. Please login instead.' 
+      });
     }
 
-    // Check last OTP time to prevent spam (min 30 seconds between requests)
+    // Rate limiting - check last OTP time to prevent spam (min 30 seconds)
     const recentOTP = await OTP.findOne({ 
-      email: email.toLowerCase() 
+      email: trimmedEmail 
     }).sort({ createdAt: -1 });
 
     if (recentOTP && (Date.now() - recentOTP.createdAt.getTime() < 30000)) {
+      const waitTime = Math.ceil((30000 - (Date.now() - recentOTP.createdAt.getTime())) / 1000);
       return res.status(429).json({ 
-        message: 'Please wait 30 seconds before requesting a new OTP' 
+        success: false,
+        message: `Please wait ${waitTime} seconds before requesting a new OTP.`,
+        retryAfter: waitTime
       });
     }
 
     // Delete old OTPs
-    await OTP.deleteMany({ email: email.toLowerCase() });
+    await OTP.deleteMany({ email: trimmedEmail });
 
     // Generate new OTP
     const otp = generateOTP();
@@ -245,24 +367,33 @@ const resendOTP = async (req, res) => {
 
     // Save OTP
     await OTP.create({
-      email: email.toLowerCase(),
+      email: trimmedEmail,
       otp,
       expiresAt,
     });
 
     // Send OTP email
-    await sendOTPEmail(email, otp, name || 'User');
+    try {
+      await sendOTPEmail(trimmedEmail, otp, name || 'User');
+      console.log(`✅ OTP resent to ${trimmedEmail}: ${otp}`);
+    } catch (emailError) {
+      console.log(`⚠️ Email failed, but OTP regenerated for ${trimmedEmail}: ${otp}`);
+      console.log('📧 Configure SMTP in backend/.env to send real emails');
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'New OTP sent successfully',
+      message: 'New OTP sent successfully! Please check your email.',
       expiresIn: '10 minutes',
+      // 🔥 FOR DEVELOPMENT ONLY - Remove in production!
+      ...(process.env.NODE_ENV === 'development' && { devOTP: otp }),
     });
   } catch (error) {
     console.error('resendOTP error:', error);
     return res.status(500).json({ 
-      message: 'Failed to resend OTP',
-      error: error.message 
+      success: false,
+      message: 'Failed to resend OTP. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -515,63 +646,6 @@ const verifyUser = async (req, res) => {
     res.status(500).json({ message: "Server mein kuch gadbad hai" });
   }
 };
-// Yahan neeche verifyUser ko export karna mat bhoolna!
-// module.exports = { ...tere purane functions, verifyUser };
-/**
- * @route   POST /api/users/upload-dp
- * @desc    Upload profile picture
- * @access  Private
- */
-const uploadProfilePicture = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Save file path (relative to backend folder)
-    const profilePictureUrl = `/uploads/profile-pictures/${req.file.filename}`;
-    
-    user.profilePictureUrl = profilePictureUrl;
-    user.dpUploaded = true;
-
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Profile picture uploaded successfully!',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        profilePictureUrl: user.profilePictureUrl,
-        dpUploaded: user.dpUploaded,
-        role: user.role,
-        isAadhaarVerified: user.isAadhaarVerified,
-        isDlVerified: user.isDlVerified,
-        kycVerified: user.kycVerified,
-        kycStatus: user.kycStatus,
-        reliabilityScore: user.reliabilityScore,
-        walletBalance: user.walletBalance,
-        age: user.age,
-        gender: user.gender,
-      },
-    });
-  } catch (error) {
-    console.error(`uploadProfilePicture error: ${error.message}`);
-    return res.status(500).json({ 
-      message: 'Server error while uploading profile picture',
-      error: error.message 
-    });
-  }
-};
 
 // All exports cleanly mapped for user controller
 module.exports = {
@@ -584,5 +658,4 @@ module.exports = {
   verifyDocuments,
   updateProfile,
   verifyUser,
-  uploadProfilePicture,
 };

@@ -50,6 +50,12 @@ const Register = () => {
         name: formData.name || 'User'
       });
       
+      // 🔥 Development mode: Show OTP in console and alert
+      if (response.data.devOTP) {
+        console.log('🔐 DEV OTP:', response.data.devOTP);
+        alert(`🔐 DEVELOPMENT MODE\n\nYour OTP is: ${response.data.devOTP}\n\n(Check email if SMTP is configured)`);
+      }
+      
       setSuccess(response.data.message);
       setStep(2);
       setResendTimer(30); // 30 seconds cooldown
@@ -118,6 +124,12 @@ const Register = () => {
         email: formData.email,
         name: formData.name || 'User'
       });
+      
+      // 🔥 Development mode: Show OTP in console and alert
+      if (response.data.devOTP) {
+        console.log('🔐 DEV OTP (Resent):', response.data.devOTP);
+        alert(`🔐 DEVELOPMENT MODE\n\nNew OTP: ${response.data.devOTP}\n\n(Check email if SMTP is configured)`);
+      }
       
       setSuccess('New OTP sent!');
       setOtp(['', '', '', '', '', '']);

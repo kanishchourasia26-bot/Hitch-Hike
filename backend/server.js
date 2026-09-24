@@ -1,12 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const rideRoutes = require('./routes/rideRoutes');
 const chatRoutes = require('./routes/chatRoutes');
-const kycRoutes = require('./routes/kycRoutes'); // KYC Route Import
 
 // Cron Job aur Model import
 const cron = require('node-cron');
@@ -23,9 +21,6 @@ connectDB();
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Serve static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // HTTP server banaya aur Socket.io initialize kiya
 const server = http.createServer(app);
@@ -184,7 +179,6 @@ io.on('connection', (socket) => {
 app.use('/api/users', userRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/chats', chatRoutes);
-app.use('/api/users/kyc', kycRoutes); // KYC Route API
 
 const PORT = process.env.PORT || 5000;
 
