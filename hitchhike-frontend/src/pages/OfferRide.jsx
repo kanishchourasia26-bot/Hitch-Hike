@@ -25,7 +25,7 @@ const Toggle = ({ checked, onChange, label }) => (
     className="flex w-full items-center justify-between py-1 cursor-pointer"
   >
     <span className="text-sm font-medium text-gray-800">{label}</span>
-    <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? 'bg-orange-500' : 'bg-gray-200'}`}>
+    <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? 'bg-purple-500' : 'bg-gray-200'}`}>
       <span className={`inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} style={{ height: '18px', width: '18px' }} />
     </span>
   </button>
@@ -177,7 +177,7 @@ const handlePublish = async () => {
     <div className="min-h-screen pb-24 bg-gray-50">
       <header className="px-5 pt-8 pb-6">
         <h1 className="text-3xl font-extrabold text-gray-900">
-          Offer <span className="text-orange-500">a Commute.</span>
+          Offer <span className="text-purple-600">a Commute.</span>
         </h1>
         <p className="text-gray-500 text-sm mt-1 font-medium">Share your daily route</p>
       </header>
@@ -198,13 +198,13 @@ const handlePublish = async () => {
              </div>
              
              {availableRoutes.length > 1 && (
-               <div className="mt-2 flex items-center justify-between bg-orange-50 p-2 rounded-lg">
-                 <span className="text-xs font-semibold text-orange-700">
+               <div className="mt-2 flex items-center justify-between bg-purple-50 p-2 rounded-lg">
+                 <span className="text-xs font-semibold text-purple-700">
                    Route {selectedRouteIndex + 1} of {availableRoutes.length}
                  </span>
                  <button 
                    onClick={handleNextRoute} 
-                   className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-md shadow active:bg-orange-600 cursor-pointer"
+                   className="text-xs bg-gradient-to-r from-purple-500 to-orange-500 text-white px-3 py-1.5 rounded-md shadow hover:shadow-lg transition cursor-pointer"
                  >
                    🔄 Change Route
                  </button>
@@ -219,7 +219,7 @@ const handlePublish = async () => {
              type="text" 
              placeholder="Vehicle e.g. TVS Wego" 
              value={vehicleName}
-             className="w-full mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500" 
+             className="w-full mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-purple-500" 
              onChange={(e) => setVehicleName(e.target.value)} 
            />
 
@@ -234,7 +234,7 @@ const handlePublish = async () => {
                    onClick={() => toggleDay(d.id)}
                    className={`w-9 h-9 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                      selectedDays.includes(d.id) 
-                       ? 'bg-orange-500 text-white shadow-md' 
+                       ? 'bg-purple-500 text-white shadow-md' 
                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                    }`}
                  >
@@ -252,7 +252,7 @@ const handlePublish = async () => {
              <input 
                type="time" 
                value={reachTime}
-               className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500 cursor-pointer font-bold" 
+               className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-purple-500 cursor-pointer font-bold" 
                onChange={(e) => setReachTime(e.target.value)} 
                required
              />
@@ -269,7 +269,7 @@ const handlePublish = async () => {
         <button
           onClick={handlePublish}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 text-sm font-bold text-white shadow-lg active:bg-orange-600 transition disabled:opacity-70 cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-orange-500 py-4 text-sm font-bold text-white shadow-lg hover:shadow-xl transition disabled:opacity-70 cursor-pointer"
         >
           {loading ? 'PUBLISHING...' : <><Bike size={18} /> PUBLISH COMMUTE</>}
         </button>

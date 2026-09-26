@@ -10,6 +10,8 @@ const {
   verifyDocuments, 
   updateProfile,
   verifyUser,
+  forgotPassword,
+  resetPassword,
 } = require('../controllers/userController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -23,6 +25,13 @@ router.post('/verify-otp', verifyOTPAndRegister);
 
 // @route   POST /api/users/resend-otp
 router.post('/resend-otp', resendOTP);
+
+// FORGOT PASSWORD FLOW
+// @route   POST /api/users/forgot-password
+router.post('/forgot-password', forgotPassword);
+
+// @route   POST /api/users/reset-password
+router.post('/reset-password', resetPassword);
 
 // LEGACY REGISTRATION (Kept for backward compatibility)
 // @route   POST /api/users/register

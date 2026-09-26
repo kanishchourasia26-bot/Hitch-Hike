@@ -69,16 +69,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    reliabilityScore: {
-      type: Number,
-      default: 100,
-      min: 0,
-      max: 100,
-    },
-    walletBalance: {
-      type: Number,
-      default: 500 // Joining bonus testing ke liye
-    },
   },
   {
     timestamps: true,

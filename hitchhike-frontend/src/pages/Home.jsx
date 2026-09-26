@@ -56,12 +56,12 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-rose-50/20 text-slate-900 font-sans pb-24 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-orange-50/20 text-slate-900 font-sans pb-24 overflow-hidden">
 
       {/* Refined background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
-        <div className="absolute top-1/4 -right-32 h-96 w-96 rounded-full bg-gradient-to-b from-orange-200 to-rose-200 blur-3xl" />
-        <div className="absolute bottom-1/4 -left-32 h-96 w-96 rounded-full bg-gradient-to-t from-teal-200 to-cyan-200 blur-3xl" />
+        <div className="absolute top-1/4 -right-32 h-96 w-96 rounded-full bg-gradient-to-b from-purple-200 to-orange-200 blur-3xl" />
+        <div className="absolute bottom-1/4 -left-32 h-96 w-96 rounded-full bg-gradient-to-t from-purple-200 to-pink-200 blur-3xl" />
       </div>
 
       <motion.main
@@ -78,7 +78,7 @@ const Home = () => {
         >
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-rose-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+            <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
               <Car size={24} strokeWidth={2.5} className="text-white" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900">HITCHHIKE</h1>
@@ -94,7 +94,7 @@ const Home = () => {
             <motion.button
               whileTap={{ scale: 0.92 }}
               onClick={() => navigate('/profile')}
-              className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-rose-500/30 cursor-pointer hover:shadow-xl transition-all duration-300"
+              className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-orange-500 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-purple-500/30 cursor-pointer hover:shadow-xl transition-all duration-300"
             >
               {currentUser?.name ? currentUser.name[0].toUpperCase() : 'U'}
               <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
@@ -129,36 +129,14 @@ const Home = () => {
             {/* Description */}
           
 
-            {/* Feature Pills - Enhanced */}
-            <div className="flex flex-wrap gap-3">
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-red-50 to-rose-50 border border-rose-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-rose-300 hover:shadow-lg hover:shadow-rose-200/50">
-                <Shield size={16} className="text-rose-500" />
-                <span className="text-xs font-bold text-slate-700">Auto-SOS</span>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/50">
-                <Users size={16} className="text-violet-500" />
-                <span className="text-xs font-bold text-slate-700">Women-Only</span>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-200/50">
-                <ShieldCheck size={16} className="text-emerald-500" />
-                <span className="text-xs font-bold text-slate-700">Verified Pods</span>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-full px-4 py-2 cursor-pointer transition-all hover:border-amber-300 hover:shadow-lg hover:shadow-amber-200/50">
-                <TrendingDown size={16} className="text-amber-600" />
-                <span className="text-xs font-bold text-slate-700">₹2.5/km</span>
-              </motion.div>
-            </div>
-
+          
             {/* CTA Buttons - Enhanced */}
             <div className="flex gap-4 pt-4">
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(249, 115, 22, 0.4)' }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/book')}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white py-4 px-8 rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-rose-500/30 cursor-pointer transition flex items-center justify-center gap-2 border border-rose-400/20"
+                className="flex-1 bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600 text-white py-4 px-8 rounded-2xl font-black uppercase tracking-wider text-sm shadow-xl shadow-purple-500/30 cursor-pointer transition flex items-center justify-center gap-2 border border-purple-400/20"
               >
                 <Search size={20} strokeWidth={2.5} />
                 Find Ride

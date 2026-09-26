@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateOTP, generateOTPExpiry } = require('../utils/otpGenerator');
-const { sendOTPEmail, sendWelcomeEmail } = require('../services/emailService');
+const { sendOTPEmail, sendWelcomeEmail, sendPasswordResetOTP } = require('../services/emailService');
 
 /**
  * Helper: sign a JWT for a given user id
@@ -283,8 +283,6 @@ const verifyOTPAndRegister = async (req, res) => {
         gender: user.gender,
         isAadhaarVerified: user.isAadhaarVerified,
         isDlVerified: user.isDlVerified,
-        reliabilityScore: user.reliabilityScore,
-        walletBalance: user.walletBalance,
       },
     });
   } catch (error) {
@@ -461,9 +459,7 @@ const registerUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         isAadhaarVerified: user.isAadhaarVerified,
-        isDLVerified: user.isDlVerified,
-        reliabilityScore: user.reliabilityScore,
-        walletBalance: user.walletBalance,
+        isDlVerified: user.isDlVerified,
       },
     });
   } catch (error) {
@@ -515,9 +511,7 @@ const loginUser = async (req, res) => {
         phone: user.phone,
         role: user.role,
         isAadhaarVerified: user.isAadhaarVerified,
-        isDLVerified: user.isDlVerified,
-        reliabilityScore: user.reliabilityScore,
-        walletBalance: user.walletBalance,
+        isDlVerified: user.isDlVerified,
       },
     });
   } catch (error) {
@@ -532,7 +526,33 @@ const loginUser = async (req, res) => {
  * @access  Private
  */
 const getMe = async (req, res) => {
-  return res.status(200).json(req.user);
+  try {
+    const user = req.user;
+    
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        age: user.age,
+        gender: user.gender,
+        vehicleNumber: user.vehicleNumber,
+        isAadhaarVerified: user.isAadhaarVerified,
+        isDlVerified: user.isDlVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }
+    });
+  } catch (error) {
+    console.error('getMe error:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch user profile' 
+    });
+  }
 };
 
 /**
@@ -647,6 +667,218 @@ const verifyUser = async (req, res) => {
   }
 };
 
+/**
+ * @route   POST /api/users/forgot-password
+ * @desc    Send OTP to email for password reset
+ * @access  Public
+ */
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email presence
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email is required' 
+      });
+    }
+
+    // Trim and validate email format
+    const trimmedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid email format. Please enter a valid email address.' 
+      });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email: trimmedEmail });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'No account found with this email address.' 
+      });
+    }
+
+    // Rate limiting check - prevent spam
+    const recentOTP = await OTP.findOne({ 
+      email: trimmedEmail 
+    }).sort({ createdAt: -1 });
+
+    if (recentOTP && (Date.now() - recentOTP.createdAt.getTime() < 30000)) {
+      const waitTime = Math.ceil((30000 - (Date.now() - recentOTP.createdAt.getTime())) / 1000);
+      return res.status(429).json({ 
+        success: false,
+        message: `Please wait ${waitTime} seconds before requesting a new OTP.`,
+        retryAfter: waitTime
+      });
+    }
+
+    // Delete any existing OTPs for this email
+    await OTP.deleteMany({ email: trimmedEmail });
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const expiresAt = generateOTPExpiry();
+
+    // Save OTP to database
+    await OTP.create({
+      email: trimmedEmail,
+      otp,
+      expiresAt,
+    });
+
+    // Send OTP email
+    try {
+      await sendPasswordResetOTP(trimmedEmail, otp, user.name);
+      console.log(`✅ Password reset OTP sent to ${trimmedEmail}: ${otp}`);
+    } catch (emailError) {
+      console.log(`⚠️ Email failed, but OTP generated for ${trimmedEmail}: ${otp}`);
+      console.log('📧 Configure SMTP in backend/.env to send real emails');
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset OTP sent successfully! Please check your email.',
+      expiresIn: '10 minutes',
+      // 🔥 FOR DEVELOPMENT ONLY - Remove in production!
+      ...(process.env.NODE_ENV === 'development' && { devOTP: otp }),
+    });
+  } catch (error) {
+    console.error('forgotPassword error:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: 'Failed to send OTP. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * @route   POST /api/users/reset-password
+ * @desc    Verify OTP and reset password
+ * @access  Public
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    // Validate required fields
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email, OTP, and new password are required' 
+      });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Password must be at least 6 characters long' 
+      });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedOTP = otp.trim();
+
+    // Check if user exists (no need to select password here)
+    const user = await User.findOne({ email: trimmedEmail });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'No account found with this email address.' 
+      });
+    }
+
+    // Find OTP record
+    const otpRecord = await OTP.findOne({ 
+      email: trimmedEmail,
+      verified: false 
+    }).sort({ createdAt: -1 }); // Get the latest OTP
+
+    if (!otpRecord) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'OTP not found or already used. Please request a new OTP.' 
+      });
+    }
+
+    // Check if OTP is expired
+    if (otpRecord.isExpired()) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({ 
+        success: false,
+        message: 'OTP has expired. Please request a new one.' 
+      });
+    }
+
+    // Check attempts (max 5 attempts)
+    if (otpRecord.attempts >= 5) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(429).json({ 
+        success: false,
+        message: 'Too many incorrect attempts. Please request a new OTP.' 
+      });
+    }
+
+    // Verify OTP
+    if (otpRecord.otp !== trimmedOTP) {
+      await otpRecord.incrementAttempts();
+      const attemptsLeft = 5 - otpRecord.attempts - 1;
+      return res.status(400).json({ 
+        success: false,
+        message: `Invalid OTP. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining.`,
+        attemptsLeft
+      });
+    }
+
+    // OTP is valid - Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    console.log(`🔐 Updating password for user: ${user.email}`);
+    console.log(`📝 User ID: ${user._id}`);
+    console.log(`🔒 New hashed password: ${hashedPassword.substring(0, 20)}...`);
+
+    // Update user password directly without re-querying
+    const updateResult = await User.updateOne(
+      { _id: user._id },
+      { $set: { password: hashedPassword } }
+    );
+
+    console.log(`✅ Update result:`, updateResult);
+
+    if (updateResult.modifiedCount === 0) {
+      console.error('❌ Password update failed - no document modified');
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to update password. Please try again.' 
+      });
+    }
+
+    // Delete used OTP
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    console.log(`✅ Password reset successful for: ${user.email}`);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successful! You can now login with your new password.',
+    });
+  } catch (error) {
+    console.error('resetPassword error:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: 'Failed to reset password. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 // All exports cleanly mapped for user controller
 module.exports = {
   sendOTP,
@@ -658,4 +890,6 @@ module.exports = {
   verifyDocuments,
   updateProfile,
   verifyUser,
+  forgotPassword,
+  resetPassword,
 };

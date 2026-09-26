@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, MapPin, Calendar, Clock, User, CheckCircle, XCircle, Play, Star } from 'lucide-react';
 import api from '../services/api_service';
 import { io } from 'socket.io-client';
-import LiveTracking from '../components/LiveTracking';
+
 
 const MyRides = () => {
   const [activeTab, setActiveTab] = useState('booked');
@@ -137,12 +137,12 @@ const MyRides = () => {
 
         {/* Contact Details */}
         {(ride.status === 'booked' || ride.status === 'active') && otherPerson && (
-          <div className="bg-orange-50 p-3 rounded-xl mb-4 border border-orange-100 flex items-center justify-between">
+          <div className="bg-purple-50 p-3 rounded-xl mb-4 border border-purple-100 flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase font-bold text-orange-500">{isDriver ? 'Passenger' : 'Driver'} Details</p>
+              <p className="text-[10px] uppercase font-bold text-purple-600">{isDriver ? 'Passenger' : 'Driver'} Details</p>
               <p className="text-sm font-bold text-gray-900">{otherPerson.name}</p>
             </div>
-            <a href={`tel:${otherPerson.phone}`} className="bg-orange-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-orange-600 transition">CALL</a>
+            <a href={`tel:${otherPerson.phone}`} className="bg-purple-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-purple-600 transition">CALL</a>
           </div>
         )}
         
@@ -190,7 +190,7 @@ const MyRides = () => {
             {!ride.rating ? (
               <button 
                 onClick={() => setRatingModal({ isOpen: true, rideId: ride._id })}
-                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-purple-600 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors"
               >
                 <Star size={18} /> RATE DRIVER
               </button>
@@ -198,7 +198,7 @@ const MyRides = () => {
               <div className="flex items-center justify-center gap-1 bg-gray-50 py-2 rounded-xl border border-gray-100">
                 <span className="text-sm font-bold text-gray-600 mr-2">You Rated:</span>
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} className={i < ride.rating ? 'text-orange-500 fill-orange-500' : 'text-gray-300'} />
+                  <Star key={i} size={16} className={i < ride.rating ? 'text-purple-500 fill-purple-500' : 'text-gray-300'} />
                 ))}
               </div>
             )}
@@ -211,7 +211,7 @@ const MyRides = () => {
   return (
     <div className="min-h-screen pb-24 bg-gray-50">
       <header className="px-5 pt-8 pb-4">
-        <h1 className="text-3xl font-extrabold text-gray-900">My <span className="text-orange-500">Activity.</span></h1>
+        <h1 className="text-3xl font-extrabold text-gray-900">My <span className="text-purple-600">Activity.</span></h1>
       </header>
 
       <div className="px-5 mb-6">
@@ -222,7 +222,7 @@ const MyRides = () => {
       </div>
 
       <main className="px-5">
-        {loading ? <div className="flex justify-center py-20"><Loader2 className="animate-spin text-orange-500" size={32} /></div> : (
+        {loading ? <div className="flex justify-center py-20"><Loader2 className="animate-spin text-purple-600" size={32} /></div> : (
           <div>
             {activeTab === 'booked' && (rides.booked.length > 0 ? rides.booked.map(ride => renderRideCard(ride, 'booked')) : <p className="text-center text-gray-500 mt-10">No booked rides.</p>)}
             {activeTab === 'offered' && (rides.offered.length > 0 ? rides.offered.map(ride => renderRideCard(ride, 'offered')) : <p className="text-center text-gray-500 mt-10">No offered rides.</p>)}
@@ -247,7 +247,7 @@ const MyRides = () => {
                 >
                   <Star 
                     size={36} 
-                    className={`${ratingData.rating >= star ? 'text-orange-500 fill-orange-500' : 'text-gray-200'} transition-colors`} 
+                    className={`${ratingData.rating >= star ? 'text-purple-500 fill-purple-500' : 'text-gray-200'} transition-colors`} 
                   />
                 </button>
               ))}
@@ -258,7 +258,7 @@ const MyRides = () => {
               placeholder="Write a quick review (optional)..."
               value={ratingData.review}
               onChange={(e) => setRatingData({ ...ratingData, review: e.target.value })}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
               rows="3"
             ></textarea>
 
@@ -272,7 +272,7 @@ const MyRides = () => {
               </button>
               <button 
                 onClick={handleSubmitRating}
-                className="flex-1 py-3 bg-orange-500 text-white font-bold rounded-xl text-sm shadow-md"
+                className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-bold rounded-xl text-sm shadow-md"
               >
                 SUBMIT
               </button>

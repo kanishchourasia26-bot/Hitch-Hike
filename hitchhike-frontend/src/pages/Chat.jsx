@@ -21,6 +21,7 @@ const Chat = ({ peerId, onClose }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
   const userStore = JSON.parse(localStorage.getItem('user')) || {};
   const myId = userStore._id || userStore.id || userStore.user?._id;
@@ -309,13 +310,188 @@ const Chat = ({ peerId, onClose }) => {
     );
   };
 
+  const ProfileModal = () => {
+    if (!showProfileModal || !peerDetails) return null;
+
+    return (
+      <>
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowProfileModal(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        />
+
+        {/* Modal */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Header with gradient */}
+            <div className="bg-gradient-to-br from-purple-500 to-orange-500 p-8 text-center relative">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white p-2 hover:bg-white/20 rounded-full transition"
+              >
+                <X size={20} />
+              </button>
+              
+              {/* Avatar */}
+              <div className="w-24 h-24 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white/30 shadow-xl">
+                <span className="text-5xl font-black text-white">
+                  {peerDetails.name?.[0]?.toUpperCase() || 'U'}
+                </span>
+              </div>
+              
+              <h2 className="text-2xl font-black text-white mb-1">
+                {peerDetails.name || 'Unknown User'}
+              </h2>
+              
+              <div className="flex items-center justify-center gap-2 text-white/90 text-sm">
+                {isOnline ? (
+                  <>
+                    <span className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
+                    <span>Online</span>
+                  </>
+                ) : (
+                  <span>Offline</span>
+                )}
+              </div>
+            </div>
+
+            {/* Details */}
+            <div className="p-6 space-y-4">
+              {/* Email */}
+              {peerDetails.email && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span className="text-orange-600 text-lg">📧</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Email</p>
+                    <p className="text-sm font-bold text-gray-800">{peerDetails.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Phone */}
+              {peerDetails.phone && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Phone size={18} className="text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Phone</p>
+                    <p className="text-sm font-bold text-gray-800">{peerDetails.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Role */}
+              {peerDetails.role && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <User size={18} className="text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Role</p>
+                    <p className="text-sm font-bold text-gray-800 capitalize">{peerDetails.role}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Gender */}
+              {peerDetails.gender && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                    <span className="text-pink-600 text-lg">
+                      {peerDetails.gender === 'male' ? '👨' : peerDetails.gender === 'female' ? '👩' : '🧑'}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Gender</p>
+                    <p className="text-sm font-bold text-gray-800 capitalize">{peerDetails.gender}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Age */}
+              {peerDetails.age && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 text-lg">🎂</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Age</p>
+                    <p className="text-sm font-bold text-gray-800">{peerDetails.age} years</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Vehicle Number (for riders) */}
+              {peerDetails.vehicleNumber && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <span className="text-yellow-600 text-lg">🚗</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Vehicle</p>
+                    <p className="text-sm font-bold text-gray-800">{peerDetails.vehicleNumber}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Verification Badges */}
+              {(peerDetails.isAadhaarVerified || peerDetails.isDlVerified) && (
+                <div className="flex gap-2 flex-wrap">
+                  {peerDetails.isAadhaarVerified && (
+                    <div className="flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-bold">
+                      <span>✓</span> Aadhaar Verified
+                    </div>
+                  )}
+                  {peerDetails.isDlVerified && (
+                    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold">
+                      <span>✓</span> DL Verified
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="p-6 pt-0 flex gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowProfileModal(false)}
+                className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-black rounded-xl shadow-lg hover:shadow-xl transition-all"
+              >
+                Close
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </>
+    );
+  };
+
   return (
     <div className="h-full bg-white flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-gray-200 relative">
       
       <ConnectionIndicator />
       
+      {/* Profile Modal */}
+      <AnimatePresence>
+        {showProfileModal && <ProfileModal />}
+      </AnimatePresence>
+      
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-3 flex items-center gap-3 shadow-lg">
+      <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 flex items-center gap-3 shadow-lg">
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={onClose} 
@@ -325,7 +501,11 @@ const Chat = ({ peerId, onClose }) => {
           <X size={20} strokeWidth={2.5} />
         </motion.button>
         
-        <div className="relative w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/30">
+        <button
+          onClick={() => setShowProfileModal(true)}
+          className="relative w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition cursor-pointer"
+          title="View Profile"
+        >
           {peerDetails?.name ? (
             <span className="font-black text-lg">{peerDetails.name[0].toUpperCase()}</span>
           ) : (
@@ -335,9 +515,13 @@ const Chat = ({ peerId, onClose }) => {
           {isOnline && (
             <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 rounded-full border-2 border-white" />
           )}
-        </div>
+        </button>
         
-        <div className="flex-1">
+        <button
+          onClick={() => setShowProfileModal(true)}
+          className="flex-1 text-left hover:opacity-80 transition cursor-pointer"
+          title="View Profile"
+        >
           <h2 className="font-black text-sm">{peerDetails?.name || "Commuter"}</h2>
           <AnimatePresence mode="wait">
             {isTyping ? (
@@ -374,7 +558,7 @@ const Chat = ({ peerId, onClose }) => {
               </motion.p>
             )}
           </AnimatePresence>
-        </div>
+        </button>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
@@ -465,7 +649,7 @@ const Chat = ({ peerId, onClose }) => {
                   <div className={`max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
                     <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
                       isMe 
-                        ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-br-md" 
+                        ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
                         : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"
                     }`}>
                       <p className="leading-relaxed break-words">{msg.text}</p>
@@ -567,7 +751,7 @@ const Chat = ({ peerId, onClose }) => {
             handleTyping();
           }}
           placeholder="Type a message..." 
-          className="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition"
+          className="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition"
           disabled={sendingMessage || connectionStatus !== 'connected'}
         />
 
@@ -584,7 +768,7 @@ const Chat = ({ peerId, onClose }) => {
           whileTap={{ scale: 0.9 }}
           type="submit" 
           disabled={!newMessage.trim() || sendingMessage || connectionStatus !== 'connected'}
-          className="h-10 w-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all"
+          className="h-10 w-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all"
         >
           {sendingMessage ? (
             <Loader2 size={16} className="animate-spin" strokeWidth={2.5} />

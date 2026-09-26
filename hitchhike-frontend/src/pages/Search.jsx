@@ -136,21 +136,21 @@ function Search() {
         {/* COMMUTE PREFERENCES SUMMARY */}
         <div className="bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-2 text-gray-700">
-            <Calendar size={16} className="text-orange-500" />
+            <Calendar size={16} className="text-purple-600" />
             <span className="text-xs font-bold uppercase tracking-wider">
               {activeDays.length} Days/Wk
             </span>
           </div>
           <div className="w-px h-6 bg-gray-200" />
           <div className="flex items-center gap-2 text-gray-700">
-            <Clock size={16} className="text-orange-500" />
+            <Clock size={16} className="text-purple-600" />
             <span className="text-xs font-bold uppercase tracking-wider">
               Reach by {reachTime || "N/A"}
             </span>
           </div>
           <div className="w-px h-6 bg-gray-200" />
           <div className="flex items-center gap-2 text-gray-700">
-            <User size={16} className="text-orange-500" />
+            <User size={16} className="text-purple-600" />
             <span className="text-xs font-bold uppercase tracking-wider">
               {passengers} Seat(s)
             </span>
@@ -181,7 +181,7 @@ function Search() {
           {/* LOADING STATE */}
           {loading && (
             <div className="bg-white p-12 rounded-3xl border border-gray-200 text-center flex flex-col items-center justify-center space-y-3 shadow-sm">
-              <Loader2 size={32} className="animate-spin text-orange-500" />
+              <Loader2 size={32} className="animate-spin text-purple-600" />
               <p className="text-sm font-bold text-gray-600">Matching with daily commuters near your route...</p>
             </div>
           )}
@@ -202,7 +202,7 @@ function Search() {
               </p>
               <button
                 onClick={() => navigate(-1)}
-                className="mt-2 px-6 py-2.5 bg-orange-500 text-white text-xs font-extrabold rounded-xl hover:bg-orange-600 transition cursor-pointer shadow-md"
+                className="mt-2 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-orange-500 text-white text-xs font-extrabold rounded-xl hover:shadow-lg transition cursor-pointer shadow-md"
               >
                 Adjust Preferences
               </button>
@@ -244,8 +244,8 @@ function Search() {
                 </div>
 
                 <div className="text-right">
-                  <div className="px-3 py-1.5 bg-orange-50 rounded-xl border border-orange-200">
-                    <p className="text-[10px] text-orange-600 font-black uppercase">Fare via Chat</p>
+                  <div className="px-3 py-1.5 bg-purple-50 rounded-xl border border-purple-200">
+                    <p className="text-[10px] text-purple-600 font-black uppercase">Fare via Chat</p>
                   </div>
                 </div>
               </div>
@@ -258,7 +258,7 @@ function Search() {
                   </div>
                   {ride.matchStartDist !== undefined && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-gray-50 text-gray-700 px-3 py-1 rounded-lg mt-1 border border-gray-200">
-                      <Footprints size={13} className="text-orange-500" />
+                      <Footprints size={13} className="text-purple-600" />
                       Walk {Math.round(ride.matchStartDist * 1000)}m to board
                     </span>
                   )}
@@ -271,7 +271,7 @@ function Search() {
                   </div>
                   {ride.matchEndDist !== undefined && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-gray-50 text-gray-700 px-3 py-1 rounded-lg mt-1 border border-gray-200">
-                      <Footprints size={13} className="text-orange-500" />
+                      <Footprints size={13} className="text-purple-600" />
                       Walk {Math.round(ride.matchEndDist * 1000)}m to destination
                     </span>
                   )}
@@ -284,7 +284,7 @@ function Search() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleBookSeat(ride._id)}
                   disabled={bookingLoadingId === ride._id}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl text-xs font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
+                  className="w-full bg-gradient-to-r from-purple-500 to-orange-500 hover:shadow-xl text-white py-3.5 rounded-xl text-xs font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
                 >
                   {bookingLoadingId === ride._id ? (
                     <>

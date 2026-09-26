@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import BottomNav from "./components/BottomNav";
 import PrivateRoute from './components/PrivateRoute';
-import LiveRidePanel from './components/LiveRidePanel';
+
 import FloatingChatButton from './components/FloatingChatButton';
 
 // Import all pages
