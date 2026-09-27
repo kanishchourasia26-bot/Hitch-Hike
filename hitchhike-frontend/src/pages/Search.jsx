@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Loader2, MapPin, Navigation, 
   Footprints, User, ShieldCheck, AlertCircle, 
-  RefreshCw, CheckCircle2, Clock, Calendar
+  RefreshCw, Clock, Calendar, MessageCircle, X, Phone, Mail
 } from 'lucide-react';
 import api from '../services/api_service';
 import MapComponent from '../components/MapComponent';
+import { useChatContext } from '../contexts/ChatContext';
 
 function Search() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { openChat } = useChatContext();
 
-  // 🔥 CHAT MODAL KE LIYE STATE 🔥
-  // Removed - now using floating chat button
+  // 🔥 PROFILE MODAL STATE 🔥
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   // 1. Safely Parse URL Parameters
   const pickUpLat = parseFloat(searchParams.get("pickuplat")) || 0;
@@ -40,7 +44,6 @@ function Search() {
   const [loading, setLoading] = useState(true);
   const [availableCommutes, setAvailableCommutes] = useState([]);
   const [tripDistance, setTripDistance] = useState(null);
-  const [bookingLoadingId, setBookingLoadingId] = useState(null);
 
   // 3. Auto-Search Commutes on Page Load
   useEffect(() => {
@@ -87,21 +90,211 @@ function Search() {
     }
   };
 
-  const handleBookSeat = async (rideId) => {
-    setBookingLoadingId(rideId);
+  const handleViewProfile = async (userId) => {
+    setShowProfileModal(true);
+    setLoadingProfile(true);
     try {
-      await api.post('/rides/book', { rideId, passengers });
-      alert("🎉 Commute matched successfully!");
-      setAvailableCommutes((prev) => prev.filter(ride => ride._id !== rideId));
+      const response = await api.get(`/users/${userId}`);
+      setSelectedUserProfile(response.data.user);
     } catch (error) {
-      alert("Request failed: " + (error.response?.data?.error || "Please try again"));
+      console.error('Failed to fetch user profile:', error);
+      alert('Failed to load profile');
+      setShowProfileModal(false);
     } finally {
-      setBookingLoadingId(null);
+      setLoadingProfile(false);
     }
+  };
+
+  const handleCloseProfile = () => {
+    setShowProfileModal(false);
+    setSelectedUserProfile(null);
+  };
+
+  const handleStartChat = (userId) => {
+    openChat(userId);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      
+      {/* PROFILE MODAL */}
+      <AnimatePresence>
+        {showProfileModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseProfile}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
+                {loadingProfile ? (
+                  <div className="p-12 flex flex-col items-center justify-center">
+                    <Loader2 size={32} className="animate-spin text-orange-500 mb-3" />
+                    <p className="text-sm text-gray-500">Loading profile...</p>
+                  </div>
+                ) : selectedUserProfile ? (
+                  <>
+                    {/* Header with gradient */}
+                    <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 text-center relative sticky top-0 z-10">
+                      <button
+                        onClick={handleCloseProfile}
+                        className="absolute top-3 right-3 text-white/80 hover:text-white p-1.5 hover:bg-white/20 rounded-full transition"
+                      >
+                        <X size={18} />
+                      </button>
+                      
+                      {/* Avatar */}
+                      <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center mx-auto mb-3 border-4 border-white/30 shadow-xl">
+                        <span className="text-4xl font-black text-white">
+                          {selectedUserProfile.name?.[0]?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                      
+                      <h2 className="text-xl font-black text-white mb-1">
+                        {selectedUserProfile.name || 'Unknown User'}
+                      </h2>
+                      
+                      <p className="text-white/90 text-xs capitalize">
+                        {selectedUserProfile.role || 'User'}
+                      </p>
+                    </div>
+
+                    {/* Details */}
+                    <div className="p-4 space-y-3">
+                      {/* Email */}
+                      {selectedUserProfile.email && (
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-9 h-9 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Mail size={16} className="text-orange-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Email</p>
+                            <p className="text-xs font-bold text-gray-800 truncate">{selectedUserProfile.email}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Phone */}
+                      {selectedUserProfile.phone && (
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Phone size={16} className="text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Phone</p>
+                            <p className="text-xs font-bold text-gray-800">{selectedUserProfile.phone}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Gender */}
+                      {selectedUserProfile.gender && (
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-9 h-9 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-base">
+                              {selectedUserProfile.gender === 'male' ? '👨' : selectedUserProfile.gender === 'female' ? '👩' : '🧑'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Gender</p>
+                            <p className="text-xs font-bold text-gray-800 capitalize">{selectedUserProfile.gender}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Age */}
+                      {selectedUserProfile.age && (
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-base">🎂</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Age</p>
+                            <p className="text-xs font-bold text-gray-800">{selectedUserProfile.age} years</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Vehicle Number (for riders) */}
+                      {selectedUserProfile.vehicleNumber && (
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-base">🚗</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Vehicle</p>
+                            <p className="text-xs font-bold text-gray-800">{selectedUserProfile.vehicleNumber}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Verification Badges */}
+                      {(selectedUserProfile.isAadhaarVerified || selectedUserProfile.isDlVerified) && (
+                        <div className="flex gap-2 flex-wrap">
+                          {selectedUserProfile.isAadhaarVerified && (
+                            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                              <span>✓</span> Aadhaar
+                            </div>
+                          )}
+                          {selectedUserProfile.isDlVerified && (
+                            <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                              <span>✓</span> DL
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Member Since */}
+                      {selectedUserProfile.createdAt && (
+                        <div className="text-center pt-3 border-t border-gray-100">
+                          <p className="text-[10px] text-gray-400">
+                            Member since {new Date(selectedUserProfile.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="p-4 pt-0 sticky bottom-0 bg-white flex gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          handleCloseProfile();
+                          handleStartChat(selectedUserProfile.id);
+                        }}
+                        className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-black rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                      >
+                        <MessageCircle size={16} />
+                        <span>Chat</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleCloseProfile}
+                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-black rounded-xl hover:bg-gray-200 transition-all"
+                      >
+                        Close
+                      </motion.button>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 shadow-sm">
@@ -136,21 +329,21 @@ function Search() {
         {/* COMMUTE PREFERENCES SUMMARY */}
         <div className="bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-2 text-gray-700">
-            <Calendar size={16} className="text-purple-600" />
+            <Calendar size={16} className="text-orange-500" />
             <span className="text-xs font-bold uppercase tracking-wider">
               {activeDays.length} Days/Wk
             </span>
           </div>
           <div className="w-px h-6 bg-gray-200" />
           <div className="flex items-center gap-2 text-gray-700">
-            <Clock size={16} className="text-purple-600" />
+            <Clock size={16} className="text-orange-500" />
             <span className="text-xs font-bold uppercase tracking-wider">
               Reach by {reachTime || "N/A"}
             </span>
           </div>
           <div className="w-px h-6 bg-gray-200" />
           <div className="flex items-center gap-2 text-gray-700">
-            <User size={16} className="text-purple-600" />
+            <User size={16} className="text-orange-500" />
             <span className="text-xs font-bold uppercase tracking-wider">
               {passengers} Seat(s)
             </span>
@@ -181,7 +374,7 @@ function Search() {
           {/* LOADING STATE */}
           {loading && (
             <div className="bg-white p-12 rounded-3xl border border-gray-200 text-center flex flex-col items-center justify-center space-y-3 shadow-sm">
-              <Loader2 size={32} className="animate-spin text-purple-600" />
+              <Loader2 size={32} className="animate-spin text-orange-500" />
               <p className="text-sm font-bold text-gray-600">Matching with daily commuters near your route...</p>
             </div>
           )}
@@ -202,7 +395,7 @@ function Search() {
               </p>
               <button
                 onClick={() => navigate(-1)}
-                className="mt-2 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-orange-500 text-white text-xs font-extrabold rounded-xl hover:shadow-lg transition cursor-pointer shadow-md"
+                className="mt-2 px-6 py-2.5 bg-orange-500 text-white text-xs font-extrabold rounded-xl hover:bg-orange-600 transition cursor-pointer shadow-md"
               >
                 Adjust Preferences
               </button>
@@ -244,8 +437,8 @@ function Search() {
                 </div>
 
                 <div className="text-right">
-                  <div className="px-3 py-1.5 bg-purple-50 rounded-xl border border-purple-200">
-                    <p className="text-[10px] text-purple-600 font-black uppercase">Fare via Chat</p>
+                  <div className="px-3 py-1.5 bg-orange-50 rounded-xl border border-orange-200">
+                    <p className="text-[10px] text-orange-600 font-black uppercase">Fare via Chat</p>
                   </div>
                 </div>
               </div>
@@ -258,7 +451,7 @@ function Search() {
                   </div>
                   {ride.matchStartDist !== undefined && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-gray-50 text-gray-700 px-3 py-1 rounded-lg mt-1 border border-gray-200">
-                      <Footprints size={13} className="text-purple-600" />
+                      <Footprints size={13} className="text-orange-500" />
                       Walk {Math.round(ride.matchStartDist * 1000)}m to board
                     </span>
                   )}
@@ -271,32 +464,23 @@ function Search() {
                   </div>
                   {ride.matchEndDist !== undefined && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-gray-50 text-gray-700 px-3 py-1 rounded-lg mt-1 border border-gray-200">
-                      <Footprints size={13} className="text-purple-600" />
+                      <Footprints size={13} className="text-orange-500" />
                       Walk {Math.round(ride.matchEndDist * 1000)}m to destination
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Action Button - View Profile */}
               <div className="mt-5 pt-4 border-t border-gray-100">
                 <motion.button
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => handleBookSeat(ride._id)}
-                  disabled={bookingLoadingId === ride._id}
-                  className="w-full bg-gradient-to-r from-purple-500 to-orange-500 hover:shadow-xl text-white py-3.5 rounded-xl text-xs font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
+                  onClick={() => handleViewProfile(ride.publisher?._id || ride.publisher)}
+                  disabled={!ride.publisher?._id && !ride.publisher}
+                  className="w-full bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white py-3.5 rounded-xl text-xs font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {bookingLoadingId === ride._id ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Requesting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={16} />
-                      <span>Join Commute</span>
-                    </>
-                  )}
+                  <User size={16} />
+                  <span>View Profile</span>
                 </motion.button>
               </div>
               

@@ -169,9 +169,13 @@ const Chat = ({ peerId, onClose }) => {
   const fetchPeerDetails = async () => {
     try {
       const res = await api.get(`/users/${peerId}`);
-      setPeerDetails(res.data);
+      console.log('Peer details response:', res.data); // Debug log
+      
+      // Backend returns { success: true, user: {...} }
+      const userData = res.data.user || res.data;
+      setPeerDetails(userData);
     } catch (error) {
-      console.log("Could not fetch peer details");
+      console.error("Could not fetch peer details:", error);
     }
   };
 
@@ -311,7 +315,34 @@ const Chat = ({ peerId, onClose }) => {
   };
 
   const ProfileModal = () => {
-    if (!showProfileModal || !peerDetails) return null;
+    if (!showProfileModal) return null;
+
+    // Show loading if peerDetails not yet loaded
+    if (!peerDetails) {
+      return (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowProfileModal(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center">
+              <Loader2 size={40} className="animate-spin text-orange-500 mb-4" />
+              <p className="text-gray-600 font-semibold">Loading profile...</p>
+            </div>
+          </motion.div>
+        </>
+      );
+    }
 
     return (
       <>
@@ -330,29 +361,30 @@ const Chat = ({ peerId, onClose }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto">
             {/* Header with gradient */}
-            <div className="bg-gradient-to-br from-purple-500 to-orange-500 p-8 text-center relative">
+            <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 text-center relative">
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="absolute top-4 right-4 text-white/80 hover:text-white p-2 hover:bg-white/20 rounded-full transition"
+                className="absolute top-3 right-3 text-white/80 hover:text-white p-2 hover:bg-white/20 rounded-full transition"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
               
               {/* Avatar */}
-              <div className="w-24 h-24 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white/30 shadow-xl">
-                <span className="text-5xl font-black text-white">
+              <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center mx-auto mb-3 border-4 border-white/30 shadow-xl">
+                <span className="text-4xl font-black text-white">
                   {peerDetails.name?.[0]?.toUpperCase() || 'U'}
                 </span>
               </div>
               
-              <h2 className="text-2xl font-black text-white mb-1">
+              <h2 className="text-xl font-black text-white mb-1">
                 {peerDetails.name || 'Unknown User'}
               </h2>
               
-              <div className="flex items-center justify-center gap-2 text-white/90 text-sm">
+              <div className="flex items-center justify-center gap-2 text-white/90 text-xs">
                 {isOnline ? (
                   <>
                     <span className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
@@ -365,114 +397,109 @@ const Chat = ({ peerId, onClose }) => {
             </div>
 
             {/* Details */}
-            <div className="p-6 space-y-4">
+            <div className="p-4 space-y-3">
               {/* Email */}
               {peerDetails.email && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 text-lg">📧</span>
+                <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                  <div className="w-9 h-9 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-orange-600 text-base">📧</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Email</p>
-                    <p className="text-sm font-bold text-gray-800">{peerDetails.email}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Email</p>
+                    <p className="text-xs font-bold text-gray-800 truncate">{peerDetails.email}</p>
                   </div>
                 </div>
               )}
 
               {/* Phone */}
               {peerDetails.phone && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Phone size={18} className="text-blue-600" />
+                <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                  <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Phone size={16} className="text-blue-600" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Phone</p>
-                    <p className="text-sm font-bold text-gray-800">{peerDetails.phone}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Role */}
-              {peerDetails.role && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <User size={18} className="text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Role</p>
-                    <p className="text-sm font-bold text-gray-800 capitalize">{peerDetails.role}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Phone</p>
+                    <p className="text-xs font-bold text-gray-800">{peerDetails.phone}</p>
                   </div>
                 </div>
               )}
 
-              {/* Gender */}
-              {peerDetails.gender && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
-                    <span className="text-pink-600 text-lg">
-                      {peerDetails.gender === 'male' ? '👨' : peerDetails.gender === 'female' ? '👩' : '🧑'}
-                    </span>
+              {/* Gender & Age Combined */}
+              <div className="flex gap-2">
+                {peerDetails.gender && (
+                  <div className="flex-1 flex items-center gap-2 p-2.5 bg-gray-50 rounded-xl">
+                    <div className="w-9 h-9 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-pink-600 text-base">
+                        {peerDetails.gender === 'male' ? '👨' : peerDetails.gender === 'female' ? '👩' : '🧑'}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Gender</p>
+                      <p className="text-xs font-bold text-gray-800 capitalize">{peerDetails.gender}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Gender</p>
-                    <p className="text-sm font-bold text-gray-800 capitalize">{peerDetails.gender}</p>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Age */}
-              {peerDetails.age && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 text-lg">🎂</span>
+                {peerDetails.age && (
+                  <div className="flex-1 flex items-center gap-2 p-2.5 bg-gray-50 rounded-xl">
+                    <div className="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 text-base">🎂</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Age</p>
+                      <p className="text-xs font-bold text-gray-800">{peerDetails.age} yrs</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Age</p>
-                    <p className="text-sm font-bold text-gray-800">{peerDetails.age} years</p>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Vehicle Number (for riders) */}
+              {/* Vehicle Number */}
               {peerDetails.vehicleNumber && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <span className="text-yellow-600 text-lg">🚗</span>
+                <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                  <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-yellow-600 text-base">🚗</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">Vehicle</p>
-                    <p className="text-sm font-bold text-gray-800">{peerDetails.vehicleNumber}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Vehicle</p>
+                    <p className="text-xs font-bold text-gray-800 uppercase">{peerDetails.vehicleNumber}</p>
                   </div>
                 </div>
               )}
 
               {/* Verification Badges */}
               {(peerDetails.isAadhaarVerified || peerDetails.isDlVerified) && (
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap pt-2">
                   {peerDetails.isAadhaarVerified && (
-                    <div className="flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-bold">
-                      <span>✓</span> Aadhaar Verified
+                    <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                      <span>✓</span> Aadhaar
                     </div>
                   )}
                   {peerDetails.isDlVerified && (
-                    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold">
-                      <span>✓</span> DL Verified
+                    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                      <span>✓</span> DL
                     </div>
                   )}
                 </div>
               )}
+
+              {/* Member Since */}
+              {peerDetails.createdAt && (
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-[10px] text-gray-400 text-center">
+                    Member since {new Date(peerDetails.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="p-6 pt-0 flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+            {/* Close Button at Bottom */}
+            <div className="p-4 pt-0">
+              <button
                 onClick={() => setShowProfileModal(false)}
-                className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-black rounded-xl shadow-lg hover:shadow-xl transition-all"
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors"
               >
                 Close
-              </motion.button>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -491,7 +518,7 @@ const Chat = ({ peerId, onClose }) => {
       </AnimatePresence>
       
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 flex items-center gap-3 shadow-lg">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-3 flex items-center gap-3 shadow-lg">
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={onClose} 
@@ -522,7 +549,7 @@ const Chat = ({ peerId, onClose }) => {
           className="flex-1 text-left hover:opacity-80 transition cursor-pointer"
           title="View Profile"
         >
-          <h2 className="font-black text-sm">{peerDetails?.name || "Commuter"}</h2>
+          <h2 className="font-black text-sm">{peerDetails?.name || "User"}</h2>
           <AnimatePresence mode="wait">
             {isTyping ? (
               <motion.p 
@@ -649,7 +676,7 @@ const Chat = ({ peerId, onClose }) => {
                   <div className={`max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
                     <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
                       isMe 
-                        ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
+                        ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-br-md" 
                         : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"
                     }`}>
                       <p className="leading-relaxed break-words">{msg.text}</p>
@@ -751,7 +778,7 @@ const Chat = ({ peerId, onClose }) => {
             handleTyping();
           }}
           placeholder="Type a message..." 
-          className="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition"
+          className="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition"
           disabled={sendingMessage || connectionStatus !== 'connected'}
         />
 
@@ -768,7 +795,7 @@ const Chat = ({ peerId, onClose }) => {
           whileTap={{ scale: 0.9 }}
           type="submit" 
           disabled={!newMessage.trim() || sendingMessage || connectionStatus !== 'connected'}
-          className="h-10 w-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all"
+          className="h-10 w-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all"
         >
           {sendingMessage ? (
             <Loader2 size={16} className="animate-spin" strokeWidth={2.5} />

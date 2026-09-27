@@ -4,9 +4,7 @@ const User = require('../models/User');
 // ==========================================
 // GLOBAL CONFIG & HELPERS
 // ==========================================
-const JABALPUR_CENTER = { lat: 23.1815, lng: 79.9864 };
-const MAX_CITY_RADIUS_KM = 20; 
-
+// Location restriction removed - now works across India
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; 
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -24,7 +22,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
  */
 const createRide = async (req, res) => {
   try {
-    const { startPoint, endPoint, days, reachTime, vehicleName, womenOnly, routePoints, expectedDistance } = req.body;
+    const { startPoint, endPoint, days, reachTime, womenOnly, routePoints, expectedDistance } = req.body;
 
     if (!startPoint?.coordinates || !endPoint?.coordinates) {
       return res.status(400).json({
@@ -44,13 +42,11 @@ const createRide = async (req, res) => {
       return res.status(400).json({ message: 'Route path points are required.' });
     }
 
-    // Geofence check inside Jabalpur bounds
-    const startDist = calculateDistance(JABALPUR_CENTER.lat, JABALPUR_CENTER.lng, startPoint.coordinates[1], startPoint.coordinates[0]);
-    const endDist = calculateDistance(JABALPUR_CENTER.lat, JABALPUR_CENTER.lng, endPoint.coordinates[1], endPoint.coordinates[0]);
+    // Location restriction removed - Now works across India
 
-    if (startDist > MAX_CITY_RADIUS_KM || endDist > MAX_CITY_RADIUS_KM) {
-      return res.status(400).json({ message: 'Sorry! Locations must be within Jabalpur service area (20km limit).' });
-    }
+    // Fetch vehicle number from user profile
+    const user = await User.findById(req.user._id);
+    const vehicleName = user.vehicleNumber || 'Vehicle not specified';
 
     const commute = await Ride.create({
       publisher: req.user._id,
@@ -70,7 +66,7 @@ const createRide = async (req, res) => {
       },
       days,
       reachTime,
-      vehicleName: vehicleName || 'Commuter Vehicle',
+      vehicleName: vehicleName,
       womenOnly: womenOnly || false,
       expectedDistance: expectedDistance || 0,  
       status: 'active'

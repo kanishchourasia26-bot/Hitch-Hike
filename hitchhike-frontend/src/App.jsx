@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import BottomNav from "./components/BottomNav";
 import PrivateRoute from './components/PrivateRoute';
+import { ChatProvider } from './contexts/ChatContext';
 
 import FloatingChatButton from './components/FloatingChatButton';
 
@@ -11,8 +12,8 @@ import BookRide from './pages/BookRide';
 import OfferRide from './pages/OfferRide';
 
 import Profile from './pages/Profile';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/Auth';
+import Register from './pages/Auth';
 import MyRides from './pages/MyRides';
 import Search from './pages/Search';
 import Chat from './pages/Chat';
@@ -56,11 +57,13 @@ function AppLayout() {
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen pb-20">
-        <AppLayout />
-      </div>
-    </Router>
+    <ChatProvider>
+      <Router>
+        <div className="min-h-screen pb-20">
+          <AppLayout />
+        </div>
+      </Router>
+    </ChatProvider>
   );
 }
 

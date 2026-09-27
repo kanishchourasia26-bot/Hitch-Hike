@@ -44,7 +44,8 @@ const userSchema = new mongoose.Schema(
         values: ['rider', 'passenger'],
         message: '{VALUE} is not a supported role',
       },
-      required: true,
+      required: false,
+      default: null
     },
     gender: {
       type: String,

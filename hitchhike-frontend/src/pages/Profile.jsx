@@ -117,22 +117,22 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-orange-50">
-        <Loader2 size={40} className="animate-spin text-purple-600 mb-3" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-rose-50">
+        <Loader2 size={40} className="animate-spin text-rose-500 mb-3" />
         <p className="text-sm font-bold text-slate-600">Loading your profile...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-orange-50/20 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-rose-50/20 pb-24">
       
       {/* REFINED HEADER WITH GRADIENT */}
-      <div className="relative bg-gradient-to-br from-purple-500 via-purple-600 to-orange-500 text-white pt-8 pb-20 px-5 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-orange-500 via-rose-500 to-pink-600 text-white pt-8 pb-20 px-5 overflow-hidden">
         {/* Decorative Blurred Elements */}
         <div className="absolute inset-0 opacity-15">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-300 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-300 rounded-full blur-3xl" />
         </div>
         
         <div className="relative max-w-3xl mx-auto">
@@ -165,7 +165,7 @@ const Profile = () => {
           {/* Profile Info */}
           <div className="flex items-start gap-4 mb-6">
             <div className="relative">
-              <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-white to-purple-100 text-purple-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-black/20">
+              <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-white to-rose-100 text-rose-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-black/20">
                 {userData?.name ? userData.name[0].toUpperCase() : "U"}
               </div>
               {(userData?.isAadhaarVerified || userData?.isDlVerified) && (
@@ -177,7 +177,7 @@ const Profile = () => {
             
             <div className="flex-1">
               <h1 className="text-2xl font-black mb-1">{userData?.name || "User"}</h1>
-              <p className="text-purple-100 text-sm font-semibold mb-2">
+              <p className="text-rose-100 text-sm font-semibold mb-2">
                 {userData?.phone || userData?.email}
               </p>
               <div className="flex items-center gap-1">
@@ -197,7 +197,7 @@ const Profile = () => {
             onClick={() => setActiveTab('profile')} 
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[18px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
               activeTab === 'profile' 
-                ? 'bg-gradient-to-r from-purple-500 to-orange-500 text-white shadow-lg shadow-purple-400/30' 
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-400/30' 
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -208,7 +208,7 @@ const Profile = () => {
             onClick={() => setActiveTab('commutes')} 
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-[18px] text-xs font-black uppercase tracking-wide transition-all duration-300 ${
               activeTab === 'commutes' 
-                ? 'bg-gradient-to-r from-purple-500 to-orange-500 text-white shadow-lg shadow-purple-400/30' 
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-400/30' 
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -240,7 +240,7 @@ const Profile = () => {
                       <motion.button 
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsEditing(true)} 
-                        className="flex items-center gap-2 text-purple-600 text-xs font-black bg-purple-50 px-4 py-2 rounded-xl hover:bg-purple-100 cursor-pointer transition-colors duration-200"
+                        className="flex items-center gap-2 text-orange-600 text-xs font-black bg-orange-50 px-4 py-2 rounded-xl hover:bg-orange-100 cursor-pointer transition-colors duration-200"
                       >
                         <Edit3 size={14} /> Edit
                       </motion.button>
@@ -249,7 +249,7 @@ const Profile = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 rounded-2xl border border-slate-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <Phone size={14} className="text-purple-600" />
+                          <Phone size={14} className="text-rose-500" />
                           <p className="text-[10px] text-slate-500 font-black uppercase">Phone</p>
                         </div>
                         <p className="text-sm font-black text-slate-900">{userData?.phone || 'Not set'}</p>
@@ -257,7 +257,7 @@ const Profile = () => {
                       
                       <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 rounded-2xl border border-slate-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <User size={14} className="text-purple-600" />
+                          <User size={14} className="text-teal-500" />
                           <p className="text-[10px] text-slate-500 font-black uppercase">Age</p>
                         </div>
                         <p className="text-sm font-black text-slate-900">{userData?.age ? `${userData.age} years` : 'Not set'}</p>
@@ -291,7 +291,7 @@ const Profile = () => {
                         whileTap={{ scale: 0.95 }}
                         type="button" 
                         onClick={() => setIsEditing(false)} 
-                        className="text-slate-400 hover:text-purple-600 cursor-pointer transition-colors duration-200"
+                        className="text-slate-400 hover:text-rose-500 cursor-pointer transition-colors duration-200"
                       >
                         <X size={22} strokeWidth={2.5} />
                       </motion.button>
@@ -305,7 +305,7 @@ const Profile = () => {
                           placeholder="Enter your name" 
                           value={editForm.name} 
                           onChange={(e) => setEditForm({...editForm, name: e.target.value})} 
-                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" 
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition" 
                           required 
                         />
                       </div>
@@ -317,7 +317,7 @@ const Profile = () => {
                           placeholder="Enter phone number" 
                           value={editForm.phone} 
                           onChange={(e) => setEditForm({...editForm, phone: e.target.value})} 
-                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" 
+                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition" 
                           required 
                         />
                       </div>
@@ -330,7 +330,7 @@ const Profile = () => {
                             placeholder="Age" 
                             value={editForm.age} 
                             onChange={(e) => setEditForm({...editForm, age: e.target.value})} 
-                            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" 
+                            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition" 
                           />
                         </div>
                         <div>
@@ -364,7 +364,7 @@ const Profile = () => {
                       whileTap={{ scale: 0.98 }}
                       type="submit" 
                       disabled={savingProfile} 
-                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-black uppercase tracking-wider rounded-xl text-sm shadow-lg shadow-purple-400/40 flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-purple-400/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-4 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-black uppercase tracking-wider rounded-xl text-sm shadow-lg shadow-rose-400/40 flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-rose-400/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {savingProfile ? (
                         <>
@@ -386,7 +386,7 @@ const Profile = () => {
               <motion.button 
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogout} 
-                className="w-full flex items-center justify-center gap-3 p-4 text-red-600 font-black text-sm bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-200/60 shadow-lg hover:from-red-100 hover:to-pink-100 transition-all duration-200"
+                className="w-full flex items-center justify-center gap-3 p-4 text-red-600 font-black text-sm bg-gradient-to-r from-red-50 to-rose-50 rounded-2xl border border-red-200/60 shadow-lg hover:from-red-100 hover:to-rose-100 transition-all duration-200"
               >
                 <LogOut size={18} strokeWidth={2.5} />
                 <span className="uppercase tracking-wider">Logout</span>
@@ -402,7 +402,7 @@ const Profile = () => {
             <div className="flex items-center justify-between px-2">
               <h3 className="font-black text-slate-900 text-sm uppercase">Offered Routes</h3>
               {offeredCommutes.length > 0 && (
-                <button onClick={() => navigate('/offer')} className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-orange-500 text-white text-[10px] font-black uppercase rounded-lg hover:shadow-lg transition cursor-pointer shadow-md">
+                <button onClick={() => navigate('/offer')} className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-[10px] font-black uppercase rounded-lg hover:from-teal-700 hover:to-cyan-700 transition cursor-pointer shadow-md">
                   <PlusCircle size={14} /> Add New
                 </button>
               )}
@@ -413,7 +413,7 @@ const Profile = () => {
                 <Car size={40} className="mx-auto text-slate-300 mb-4" />
                 <h3 className="font-black text-slate-900 text-sm mb-1">No Active Commutes</h3>
                 <p className="text-xs text-slate-500 mb-6">You haven't offered any daily routes yet. Publish your route so peers can join.</p>
-                <button onClick={() => navigate('/offer')} className="w-full py-3.5 bg-gradient-to-r from-purple-500 to-orange-500 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-xl transition cursor-pointer shadow-lg shadow-purple-400/30 flex justify-center items-center gap-2">
+                <button onClick={() => navigate('/offer')} className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:from-teal-600 hover:to-cyan-600 transition cursor-pointer shadow-lg shadow-teal-400/30 flex justify-center items-center gap-2">
                   <PlusCircle size={16} /> Offer A Commute
                 </button>
               </div>

@@ -122,18 +122,10 @@ const verifyOTPAndRegister = async (req, res) => {
       });
     }
 
-    if (!phone || !password || !role) {
+    if (!phone || !password) {
       return res.status(400).json({ 
         success: false,
-        message: 'Phone, password, and role are required' 
-      });
-    }
-
-    // Validate role
-    if (!['rider', 'passenger'].includes(role)) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Role must be either "rider" or "passenger"' 
+        message: 'Phone and password are required' 
       });
     }
 
@@ -251,9 +243,9 @@ const verifyOTPAndRegister = async (req, res) => {
       email: trimmedEmail,
       phone: trimmedPhone,
       password: hashedPassword,
-      role,
       ...(age && { age: parseInt(age) }),
       ...(gender && { gender }),
+      ...(vehicleNumber && { vehicleNumber }),
     });
 
     // Generate JWT token
@@ -278,9 +270,9 @@ const verifyOTPAndRegister = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
         age: user.age,
         gender: user.gender,
+        vehicleNumber: user.vehicleNumber,
         isAadhaarVerified: user.isAadhaarVerified,
         isDlVerified: user.isDlVerified,
       },
@@ -406,18 +398,14 @@ const registerUser = async (req, res) => {
   console.log("DEBUG: Incoming Request Body:", req.body); 
 
   try {
-    let { name, email, phone, password, role } = req.body; 
+    let { name, email, phone, password, age, gender, vehicleNumber } = req.body;
 
-    if (!phone || !password || !role) {
-      return res.status(400).json({ message: 'phone, password and role are required' });
-    }
-
-    if (!['rider', 'passenger'].includes(role)) {
-      return res.status(400).json({ message: 'role must be either "rider" or "passenger"' });
+    if (!phone || !password) {
+      return res.status(400).json({ success: false, message: 'Phone and password are required' });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
     }
 
     if (!email || email.trim() === '') {
@@ -429,10 +417,10 @@ const registerUser = async (req, res) => {
     
     if (existingUser) {
       if (existingUser.phone === phone) {
-        return res.status(409).json({ message: 'A user with this phone number already exists' });
+        return res.status(409).json({ success: false, message: 'A user with this phone number already exists' });
       }
       if (existingUser.email === email) {
-        return res.status(409).json({ message: 'A user with this email already exists' });
+        return res.status(409).json({ success: false, message: 'A user with this email already exists' });
       }
     }
 
@@ -444,12 +432,15 @@ const registerUser = async (req, res) => {
       email,
       phone,
       password: hashedPassword,
-      role,
+      ...(age && { age: parseInt(age) }),
+      ...(gender && { gender }),
+      ...(vehicleNumber && { vehicleNumber }),
     });
 
     const token = generateToken(user._id);
 
     return res.status(201).json({
+      success: true,
       message: 'User registered successfully',
       token,
       user: {
@@ -457,7 +448,9 @@ const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        age: user.age,
+        gender: user.gender,
+        vehicleNumber: user.vehicleNumber,
         isAadhaarVerified: user.isAadhaarVerified,
         isDlVerified: user.isDlVerified,
       },
@@ -467,10 +460,10 @@ const registerUser = async (req, res) => {
     
     if (error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
-      return res.status(400).json({ message: `An account with this ${field} already exists.` });
+      return res.status(400).json({ success: false, message: `An account with this ${field} already exists.` });
     }
     
-    return res.status(500).json({ message: 'Server error during registration' });
+    return res.status(500).json({ success: false, message: 'Server error during registration' });
   }
 };
 
@@ -481,27 +474,49 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!phone || !password) {
-      return res.status(400).json({ message: 'phone and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email and password are required' 
+      });
     }
 
-    const user = await User.findOne({ phone }).select('+password');
+    // Trim and lowercase email
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid email format' 
+      });
+    }
+
+    const user = await User.findOne({ email: trimmedEmail }).select('+password');
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
     }
 
     const token = generateToken(user._id);
 
     return res.status(200).json({
+      success: true,
       message: 'Login successful',
       token,
       user: {
@@ -516,7 +531,10 @@ const loginUser = async (req, res) => {
     });
   } catch (error) {
     console.error(`loginUser error: ${error.message}`);
-    return res.status(500).json({ message: 'Server error during login' });
+    return res.status(500).json({ 
+      success: false,
+      message: 'Server error during login' 
+    });
   }
 };
 
@@ -619,6 +637,11 @@ const updateProfile = async (req, res) => {
     if (age !== undefined) user.age = age;
     if (gender) user.gender = gender;
     if (vehicleNumber !== undefined) user.vehicleNumber = vehicleNumber;
+
+    // Fix invalid role values (old data cleanup)
+    if (user.role && !['rider', 'passenger'].includes(user.role)) {
+      user.role = null; // Reset invalid roles to null
+    }
 
     await user.save();
 
@@ -840,25 +863,11 @@ const resetPassword = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    console.log(`🔐 Updating password for user: ${user.email}`);
-    console.log(`📝 User ID: ${user._id}`);
-    console.log(`🔒 New hashed password: ${hashedPassword.substring(0, 20)}...`);
-
     // Update user password directly without re-querying
-    const updateResult = await User.updateOne(
+    await User.updateOne(
       { _id: user._id },
       { $set: { password: hashedPassword } }
     );
-
-    console.log(`✅ Update result:`, updateResult);
-
-    if (updateResult.modifiedCount === 0) {
-      console.error('❌ Password update failed - no document modified');
-      return res.status(500).json({ 
-        success: false,
-        message: 'Failed to update password. Please try again.' 
-      });
-    }
 
     // Delete used OTP
     await OTP.deleteOne({ _id: otpRecord._id });
@@ -879,6 +888,49 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * @route   GET /api/users/:userId
+ * @desc    Get user profile by ID (public view)
+ * @access  Public (anyone can view)
+ */
+const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        age: user.age,
+        gender: user.gender,
+        vehicleNumber: user.vehicleNumber,
+        isAadhaarVerified: user.isAadhaarVerified,
+        isDlVerified: user.isDlVerified,
+        createdAt: user.createdAt,
+      }
+    });
+  } catch (error) {
+    console.error('getUserById error:', error);
+    return res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch user profile' 
+    });
+  }
+};
+
 // All exports cleanly mapped for user controller
 module.exports = {
   sendOTP,
@@ -887,6 +939,7 @@ module.exports = {
   registerUser, // Legacy endpoint
   loginUser,
   getMe,
+  getUserById,
   verifyDocuments,
   updateProfile,
   verifyUser,

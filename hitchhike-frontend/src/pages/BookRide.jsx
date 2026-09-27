@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
+import api from '../services/api_service';
 
 const DAYS_OF_WEEK = [
   { id: 'mon', label: 'M' },
@@ -32,14 +33,11 @@ const BookRide = () => {
   const navigate = useNavigate();
 
   // Form States
-  const [passengers, setPassengers] = useState('');
   const [selectedDays, setSelectedDays] = useState(['mon', 'tue', 'wed', 'thu', 'fri']); 
   const [reachTime, setReachTime] = useState('09:30'); 
   const [radiusKm, setRadiusKm] = useState(1.5);
   const [womenOnly, setWomenOnly] = useState(false);
   
-  // NAYA: KYC Verified state
-  const [kycVerified, setKycVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   
   // Map and Tracking states
@@ -93,7 +91,7 @@ const BookRide = () => {
   };
 
  const handleSearch = () => {
-    if (!pickup || !drop || !passengers || selectedDays.length === 0 || !reachTime) {
+    if (!pickup || !drop || selectedDays.length === 0 || !reachTime) {
       alert("Please fill commute details, select days/time, and choose locations on the map!");
       return;
     }
@@ -102,14 +100,33 @@ const BookRide = () => {
       return;
     }
 
-    setLoading(true);
-    const daysQuery = selectedDays.join(',');
-    
-    // 🔥 FIX: /user/search ki jagah sirf /search kar diya hai
-    setTimeout(() => {
-      navigate(`/search?pickuplat=${pickup.lat}&pickuplon=${pickup.lng}&droplat=${drop.lat}&droplon=${drop.lng}&passengers=${passengers}&womenOnly=${womenOnly}&kycVerified=${kycVerified}&days=${daysQuery}&reachTime=${encodeURIComponent(reachTime)}&radius=${radiusKm}`);
-      setLoading(false);
-    }, 500);
+    // Check if profile is complete
+    const checkProfileAndSearch = async () => {
+      setLoading(true);
+      try {
+        const userResponse = await api.get('/users/me');
+        const user = userResponse.data.user;
+        
+        if (!user.age || !user.gender) {
+          alert("⚠️ Please complete your profile first!\n\nGo to Profile → Add:\n- Age\n- Gender");
+          setLoading(false);
+          return;
+        }
+
+        const daysQuery = selectedDays.join(',');
+        
+        setTimeout(() => {
+          navigate(`/search?pickuplat=${pickup.lat}&pickuplon=${pickup.lng}&droplat=${drop.lat}&droplon=${drop.lng}&passengers=1&womenOnly=${womenOnly}&days=${daysQuery}&reachTime=${encodeURIComponent(reachTime)}&radius=${radiusKm}`);
+          setLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        alert("Failed to verify profile. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    checkProfileAndSearch();
   };
 
   return (
@@ -154,15 +171,6 @@ const BookRide = () => {
 
         {/* Schedule & Commute Details Section */}
         <section className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
-           <input 
-             type="number" 
-             placeholder="Seats Needed (e.g. 1)" 
-             value={passengers}
-             className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-orange-500" 
-             onChange={(e) => setPassengers(e.target.value)} 
-             min="1" max="4"
-           />
-           
            {/* Days Selector */}
            <div className="space-y-2">
              <label className="text-xs font-bold text-gray-500 uppercase">Commute Days</label>
@@ -201,9 +209,6 @@ const BookRide = () => {
         {/* Preferences & Radius */}
         <section className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
           <Toggle checked={womenOnly} onChange={setWomenOnly} label="Women-only commute" />
-          
-          {/* NAYA: KYC Verified Toggle */}
-          <Toggle checked={kycVerified} onChange={setKycVerified} label="KYC Verified" />
           
           {/* Radius Slider */}
           <div className="pt-2 border-t border-gray-100">

@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, User, ChevronRight } from 'lucide-react';
 import api from '../services/api_service';
 import Chat from '../pages/Chat';
+import { useChatContext } from '../contexts/ChatContext';
 
 const FloatingChatButton = () => {
+  const { activeChatPeerId, openChat, closeChat } = useChatContext();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeChatPeerId, setActiveChatPeerId] = useState(null);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -40,7 +41,7 @@ const FloatingChatButton = () => {
   };
 
   const handleChatClick = (peerId) => {
-    setActiveChatPeerId(peerId);
+    openChat(peerId);
   };
 
   const handleCloseChatList = () => {
@@ -48,7 +49,7 @@ const FloatingChatButton = () => {
   };
 
   const handleCloseActiveChat = () => {
-    setActiveChatPeerId(null);
+    closeChat();
     fetchRecentChats(); // Refresh chat list
   };
 
@@ -62,7 +63,7 @@ const FloatingChatButton = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-6 z-50 h-16 w-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full shadow-2xl shadow-orange-500/40 flex items-center justify-center text-white cursor-pointer group"
+          className="fixed bottom-24 right-6 z-50 h-16 w-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full shadow-2xl shadow-indigo-500/40 flex items-center justify-center text-white cursor-pointer group"
         >
           <MessageCircle size={28} strokeWidth={2} className="group-hover:rotate-12 transition-transform" />
           

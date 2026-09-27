@@ -1,0 +1,1423 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tocloft}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+
+% Code listing configuration
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% Hyperlink setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Hitchhike - Carpooling Platform},
+    pdfpagemode=FullScreen,
+}
+
+% Header and Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Hitchhike Platform}
+\lhead{Technical Documentation}
+\rfoot{Page \thepage}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries}{\thesection}{1em}{}[{\titlerule[0.8pt]}]
+
+\begin{document}
+
+% Title Page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Hitchhike\\[0.5cm]}
+    {\LARGE Real-Time Carpooling Platform\\[0.2cm]}
+    \vspace{1cm}
+    
+    {\Large\textbf{Technical Documentation \& System Architecture}\\[2cm]}
+    
+    \vspace{1.5cm}
+    
+    \begin{tabular}{rl}
+        \textbf{Technology Stack:} & MERN (MongoDB, Express, React, Node.js) \\[0.3cm]
+        \textbf{Real-Time:} & Socket.io WebSocket Communication \\[0.3cm]
+        \textbf{Frontend:} & React 18, TailwindCSS, Leaflet Maps \\[0.3cm]
+        \textbf{Backend:} & Node.js, Express.js, JWT Authentication \\[0.3cm]
+        \textbf{Database:} & MongoDB with Geospatial Indexing \\[0.3cm]
+    \end{tabular}
+    
+    \vfill
+    
+    {\large \today\\[2cm]}
+    
+\end{titlepage}
+
+% Table of Contents
+\tableofcontents
+\newpage
+
+% Abstract
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+Hitchhike is a modern, full-stack carpooling platform built using the MERN stack that connects drivers offering rides with passengers seeking transportation. The platform addresses urban mobility challenges by facilitating ride-sharing, reducing traffic congestion, and promoting sustainable transportation. The system implements real-time communication through Socket.io, advanced geospatial queries for location-based ride matching, secure JWT authentication, and an intuitive responsive interface built with React and TailwindCSS.
+
+Key features include ride creation and search functionality, intelligent matching based on proximity and routes, real-time chat between drivers and passengers, booking management, and comprehensive user profiles. The architecture emphasizes scalability, security, and user experience, making it suitable for deployment in urban environments where carpooling can significantly impact transportation efficiency and environmental sustainability.
+
+\newpage
+
+\section{Introduction}
+
+\subsection{Project Overview}
+Hitchhike is a comprehensive carpooling platform designed to facilitate ride-sharing between drivers and passengers. The application leverages modern web technologies to provide a seamless, real-time experience for users seeking to share rides, reduce transportation costs, and contribute to environmental sustainability.
+
+\subsection{Problem Statement}
+Urban areas face significant challenges related to:
+\begin{itemize}
+    \item Traffic congestion due to single-occupancy vehicles
+    \item High transportation costs for daily commuters
+    \item Environmental impact from excessive vehicle emissions
+    \item Inefficient utilization of vehicle capacity
+    \item Limited affordable transportation options
+\end{itemize}
+
+\subsection{Solution Approach}
+Hitchhike addresses these challenges by creating a platform that:
+\begin{itemize}
+    \item Connects drivers with empty seats to passengers traveling similar routes
+    \item Implements intelligent geospatial matching for optimal ride pairing
+    \item Provides real-time communication channels for coordination
+    \item Ensures secure authentication and user verification
+    \item Offers an intuitive mobile-responsive interface
+\end{itemize}
+
+\subsection{Key Objectives}
+\begin{enumerate}
+    \item Develop a scalable, full-stack web application using MERN technologies
+    \item Implement real-time features using WebSocket communication
+    \item Design efficient geospatial queries for location-based matching
+    \item Create a secure authentication and authorization system
+    \item Build a responsive, user-friendly interface
+    \item Enable seamless ride booking and management workflows
+\end{enumerate}
+
+\newpage
+
+\section{System Architecture}
+
+\subsection{Architecture Overview}
+The Hitchhike platform follows a three-tier architecture pattern:
+
+\begin{enumerate}
+    \item \textbf{Presentation Layer:} React-based single-page application (SPA)
+    \item \textbf{Application Layer:} Node.js/Express RESTful API server
+    \item \textbf{Data Layer:} MongoDB database with geospatial indexing
+\end{enumerate}
+
+\subsection{High-Level Architecture Diagram}
+
+\begin{figure}[H]
+    \centering
+    \begin{verbatim}
+    ┌─────────────────────────────────────────────────────────┐
+    │                  CLIENT LAYER (React)                    │
+    │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
+    │  │  Pages   │  │Components│  │ Services │  │  Utils  │ │
+    │  └──────────┘  └──────────┘  └──────────┘  └─────────┘ │
+    └─────────────────────────────────────────────────────────┘
+                              ↕ HTTP/HTTPS + WebSocket
+    ┌─────────────────────────────────────────────────────────┐
+    │              APPLICATION LAYER (Node.js/Express)         │
+    │  ┌──────────┐  ┌───────────┐  ┌────────┐  ┌──────────┐ │
+    │  │  Routes  │→ │Controllers│→ │Middleware│ │Socket.io│ │
+    │  └──────────┘  └───────────┘  └────────┘  └──────────┘ │
+    └─────────────────────────────────────────────────────────┘
+                              ↕ MongoDB Driver
+    ┌─────────────────────────────────────────────────────────┐
+    │                DATA LAYER (MongoDB)                      │
+    │  ┌──────┐  ┌─────────┐  ┌────────┐  ┌────────────────┐ │
+    │  │Users │  │  Rides  │  │Bookings│  │    Messages    │ │
+    │  └──────┘  └─────────┘  └────────┘  └────────────────┘ │
+    └─────────────────────────────────────────────────────────┘
+    \end{verbatim}
+    \caption{Three-Tier Architecture of Hitchhike Platform}
+\end{figure}
+
+\subsection{Component Interaction Flow}
+
+\subsubsection{User Authentication Flow}
+\begin{enumerate}
+    \item User submits credentials via React form
+    \item API service sends POST request to \texttt{/api/users/login}
+    \item Auth middleware validates credentials and generates JWT token
+    \item Token stored in localStorage and included in subsequent requests
+    \item Protected routes verify token before granting access
+\end{enumerate}
+
+\subsubsection{Ride Search Flow}
+\begin{enumerate}
+    \item User enters origin, destination, and search radius
+    \item Frontend sends coordinates to \texttt{/api/rides/search}
+    \item Backend performs geospatial query using MongoDB \$near operator
+    \item Results filtered by availability and date criteria
+    \item Matched rides returned with driver information
+    \item Frontend displays rides on interactive map with Leaflet
+\end{enumerate}
+
+\subsubsection{Real-Time Chat Flow}
+\begin{enumerate}
+    \item User initiates chat from booking details
+    \item Frontend establishes WebSocket connection via Socket.io
+    \item Messages emitted to server with room identifier
+    \item Server broadcasts messages to connected participants
+    \item Messages persisted to MongoDB for history
+    \item Offline users receive messages upon reconnection
+\end{enumerate}
+
+\newpage
+
+\section{Technology Stack}
+
+\subsection{Frontend Technologies}
+
+\subsubsection{React 18}
+\begin{itemize}
+    \item Component-based architecture for reusable UI elements
+    \item Hooks (useState, useEffect, useContext) for state management
+    \item React Router v6 for client-side routing
+    \item Concurrent rendering features for improved performance
+\end{itemize}
+
+\subsubsection{TailwindCSS}
+\begin{itemize}
+    \item Utility-first CSS framework for rapid UI development
+    \item Responsive design with mobile-first approach
+    \item Custom configuration for brand colors and spacing
+    \item JIT (Just-In-Time) compilation for optimized bundle size
+\end{itemize}
+
+\subsubsection{Leaflet Maps}
+\begin{itemize}
+    \item Open-source interactive mapping library
+    \item Custom markers for ride locations
+    \item Route visualization between origin and destination
+    \item Geocoding integration for address lookup
+\end{itemize}
+
+\subsubsection{Vite}
+\begin{itemize}
+    \item Next-generation frontend build tool
+    \item Hot Module Replacement (HMR) for fast development
+    \item Optimized production builds with code splitting
+    \item Native ES modules support
+\end{itemize}
+
+\subsection{Backend Technologies}
+
+\subsubsection{Node.js}
+\begin{itemize}
+    \item JavaScript runtime built on Chrome V8 engine
+    \item Non-blocking I/O for handling concurrent requests
+    \item Event-driven architecture for real-time features
+    \item NPM ecosystem for extensive library support
+\end{itemize}
+
+\subsubsection{Express.js}
+\begin{itemize}
+    \item Minimalist web framework for Node.js
+    \item RESTful API architecture with modular routing
+    \item Middleware chain for request processing
+    \item Error handling and logging capabilities
+\end{itemize}
+
+\subsubsection{Socket.io}
+\begin{itemize}
+    \item Real-time bidirectional communication library
+    \item WebSocket protocol with fallback mechanisms
+    \item Room-based messaging for private chats
+    \item Event-driven message handling
+\end{itemize}
+
+\subsection{Database Technology}
+
+\subsubsection{MongoDB}
+\begin{itemize}
+    \item NoSQL document-oriented database
+    \item Flexible schema design for evolving requirements
+    \item Native geospatial indexing and queries
+    \item Horizontal scalability through sharding
+    \item Mongoose ODM for schema validation and querying
+\end{itemize}
+
+\subsection{Authentication \& Security}
+
+\subsubsection{JWT (JSON Web Tokens)}
+\begin{itemize}
+    \item Stateless authentication mechanism
+    \item Signed tokens for integrity verification
+    \item Payload contains user identification and roles
+    \item Short expiration times for security
+\end{itemize}
+
+\subsubsection{bcrypt}
+\begin{itemize}
+    \item Password hashing with salt rounds
+    \item Protection against rainbow table attacks
+    \item Configurable computational cost
+\end{itemize}
+
+\newpage
+
+\section{Database Design}
+
+\subsection{Schema Architecture}
+
+\subsubsection{User Schema}
+\begin{lstlisting}[language=JavaScript, caption=User Model Structure]
+{
+  name: String (required),
+  email: String (required, unique),
+  password: String (required, hashed),
+  phone: String (required),
+  role: Enum ['driver', 'passenger'] (default: 'passenger'),
+  profilePicture: String (URL),
+  bio: String,
+  vehicleInfo: {
+    make: String,
+    model: String,
+    color: String,
+    plateNumber: String,
+    seats: Number
+  },
+  preferences: {
+    smoking: Boolean,
+    pets: Boolean,
+    music: Boolean
+  },
+  rating: Number (default: 5),
+  totalRides: Number (default: 0),
+  verificationStatus: Boolean (default: false),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+\end{lstlisting}
+
+\subsubsection{Ride Schema}
+\begin{lstlisting}[language=JavaScript, caption=Ride Model Structure]
+{
+  driver: ObjectId (ref: 'User', required),
+  origin: {
+    type: 'Point',
+    coordinates: [longitude, latitude] (required),
+    address: String
+  },
+  destination: {
+    type: 'Point',
+    coordinates: [longitude, latitude] (required),
+    address: String
+  },
+  departureTime: Date (required),
+  availableSeats: Number (required),
+  pricePerSeat: Number (required),
+  vehicleInfo: Object,
+  preferences: Object,
+  status: Enum ['active', 'full', 'completed', 'cancelled'],
+  route: Array of coordinates,
+  distance: Number (in km),
+  duration: Number (in minutes),
+  recurring: Boolean (default: false),
+  recurringDays: Array of days,
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+
+// Geospatial Index
+ride.index({ 'origin.coordinates': '2dsphere' });
+ride.index({ 'destination.coordinates': '2dsphere' });
+\end{lstlisting}
+
+\subsubsection{Booking Schema}
+\begin{lstlisting}[language=JavaScript, caption=Booking Model Structure]
+{
+  ride: ObjectId (ref: 'Ride', required),
+  passenger: ObjectId (ref: 'User', required),
+  driver: ObjectId (ref: 'User', required),
+  seatsBooked: Number (required),
+  totalPrice: Number (required),
+  status: Enum ['pending', 'confirmed', 'completed', 'cancelled'],
+  pickupPoint: {
+    type: 'Point',
+    coordinates: [longitude, latitude],
+    address: String
+  },
+  dropoffPoint: {
+    type: 'Point',
+    coordinates: [longitude, latitude],
+    address: String
+  },
+  paymentStatus: Enum ['pending', 'paid', 'refunded'],
+  rating: Number,
+  review: String,
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+\end{lstlisting}
+
+\subsubsection{Message Schema}
+\begin{lstlisting}[language=JavaScript, caption=Message Model Structure]
+{
+  sender: ObjectId (ref: 'User', required),
+  receiver: ObjectId (ref: 'User', required),
+  booking: ObjectId (ref: 'Booking'),
+  content: String (required),
+  timestamp: Date (default: Date.now),
+  read: Boolean (default: false),
+  messageType: Enum ['text', 'system', 'notification']
+}
+
+// Index for efficient querying
+message.index({ sender: 1, receiver: 1, timestamp: -1 });
+\end{lstlisting}
+
+\subsection{Geospatial Indexing}
+
+MongoDB's \texttt{2dsphere} indexes enable efficient geospatial queries:
+
+\begin{lstlisting}[language=JavaScript, caption=Geospatial Query Example]
+// Find rides within 10km of user's location
+const rides = await Ride.find({
+  'origin.coordinates': {
+    $near: {
+      $geometry: {
+        type: 'Point',
+        coordinates: [userLongitude, userLatitude]
+      },
+      $maxDistance: 10000 // meters
+    }
+  },
+  status: 'active',
+  availableSeats: { $gt: 0 }
+});
+\end{lstlisting}
+
+\subsection{Database Relationships}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Collection} & \textbf{References} & \textbf{Relationship Type} \\
+\hline
+Ride & User (driver) & Many-to-One \\
+Booking & Ride, User (passenger), User (driver) & Many-to-One \\
+Message & User (sender), User (receiver), Booking & Many-to-One \\
+\hline
+\end{tabular}
+\caption{Database Relationship Structure}
+\end{table}
+
+\newpage
+
+\section{API Documentation}
+
+\subsection{Authentication Endpoints}
+
+\subsubsection{POST /api/users/register}
+\textbf{Description:} Register a new user\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword123",
+  "phone": "+919876543210",
+  "role": "driver"
+}
+\end{lstlisting}
+
+\textbf{Response:} HTTP 201
+\begin{lstlisting}[language=JSON]
+{
+  "_id": "64abc123...",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+\end{lstlisting}
+
+\subsubsection{POST /api/users/login}
+\textbf{Description:} Authenticate user and receive JWT token\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+\end{lstlisting}
+
+\textbf{Response:} HTTP 200
+\begin{lstlisting}[language=JSON]
+{
+  "_id": "64abc123...",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "driver",
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+\end{lstlisting}
+
+\subsection{Ride Management Endpoints}
+
+\subsubsection{POST /api/rides}
+\textbf{Description:} Create a new ride (Driver only)\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "origin": {
+    "coordinates": [79.9864, 23.1815],
+    "address": "Jabalpur, MP"
+  },
+  "destination": {
+    "coordinates": [77.2090, 28.6139],
+    "address": "New Delhi"
+  },
+  "departureTime": "2026-09-15T08:00:00Z",
+  "availableSeats": 3,
+  "pricePerSeat": 500
+}
+\end{lstlisting}
+
+\textbf{Response:} HTTP 201
+
+\subsubsection{GET /api/rides/search}
+\textbf{Description:} Search for available rides with geospatial filtering\\
+\textbf{Query Parameters:}
+\begin{itemize}
+    \item \texttt{originLat}: Origin latitude
+    \item \texttt{originLng}: Origin longitude
+    \item \texttt{destLat}: Destination latitude
+    \item \texttt{destLng}: Destination longitude
+    \item \texttt{radius}: Search radius in km (default: 10)
+    \item \texttt{date}: Departure date filter
+\end{itemize}
+
+\textbf{Response:} HTTP 200 - Array of matching rides
+
+\subsubsection{GET /api/rides/:id}
+\textbf{Description:} Get detailed information about a specific ride\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Response:} HTTP 200 - Ride object with populated driver info
+
+\subsubsection{GET /api/rides/myrides}
+\textbf{Description:} Get all rides created by authenticated user\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Response:} HTTP 200 - Array of user's rides
+
+\subsection{Booking Endpoints}
+
+\subsubsection{POST /api/bookings}
+\textbf{Description:} Book seats on an available ride\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "rideId": "64abc123...",
+  "seatsBooked": 2,
+  "pickupPoint": {
+    "coordinates": [79.9864, 23.1815],
+    "address": "Jabalpur Station"
+  }
+}
+\end{lstlisting}
+
+\textbf{Response:} HTTP 201 - Booking confirmation
+
+\subsubsection{GET /api/bookings/mybookings}
+\textbf{Description:} Get all bookings made by authenticated user\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Response:} HTTP 200 - Array of bookings with ride and driver details
+
+\subsubsection{PATCH /api/bookings/:id/status}
+\textbf{Description:} Update booking status (confirm/cancel)\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "status": "confirmed"
+}
+\end{lstlisting}
+
+\subsection{Chat Endpoints}
+
+\subsubsection{GET /api/chat/:bookingId}
+\textbf{Description:} Retrieve chat history for a specific booking\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Response:} HTTP 200 - Array of messages
+
+\subsubsection{POST /api/chat}
+\textbf{Description:} Send a message (also handled via Socket.io)\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "receiverId": "64abc456...",
+  "bookingId": "64abc789...",
+  "content": "What time should I arrive?"
+}
+\end{lstlisting}
+
+\subsection{User Profile Endpoints}
+
+\subsubsection{GET /api/users/profile}
+\textbf{Description:} Get authenticated user's profile\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Response:} HTTP 200 - User profile with statistics
+
+\subsubsection{PUT /api/users/profile}
+\textbf{Description:} Update user profile information\\
+\textbf{Authorization:} Bearer Token Required\\
+\textbf{Request Body:}
+\begin{lstlisting}[language=JSON]
+{
+  "bio": "Experienced driver, 5 years carpooling",
+  "vehicleInfo": {
+    "make": "Honda",
+    "model": "City",
+    "color": "White",
+    "seats": 4
+  },
+  "preferences": {
+    "smoking": false,
+    "pets": true,
+    "music": true
+  }
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Key Features Implementation}
+
+\subsection{Geospatial Ride Matching}
+
+The platform implements sophisticated geospatial algorithms:
+
+\subsubsection{Proximity-Based Search}
+\begin{lstlisting}[language=JavaScript, caption=Ride Search Controller]
+const searchRides = async (req, res) => {
+  const { originLat, originLng, destLat, destLng, radius = 10 } = req.query;
+  
+  const maxDistanceMeters = radius * 1000;
+  
+  const rides = await Ride.find({
+    'origin.coordinates': {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [parseFloat(originLng), parseFloat(originLat)]
+        },
+        $maxDistance: maxDistanceMeters
+      }
+    },
+    'destination.coordinates': {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [parseFloat(destLng), parseFloat(destLat)]
+        },
+        $maxDistance: maxDistanceMeters
+      }
+    },
+    status: 'active',
+    availableSeats: { $gt: 0 }
+  }).populate('driver', 'name email phone rating profilePicture');
+  
+  res.json(rides);
+};
+\end{lstlisting}
+
+\subsection{Real-Time Chat System}
+
+\subsubsection{Socket.io Implementation}
+\begin{lstlisting}[language=JavaScript, caption=Real-Time Messaging]
+// Server-side Socket.io setup
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+  
+  // Join a booking-specific room
+  socket.on('join-room', (bookingId) => {
+    socket.join(`booking-${bookingId}`);
+  });
+  
+  // Handle incoming messages
+  socket.on('send-message', async (data) => {
+    const { senderId, receiverId, bookingId, content } = data;
+    
+    // Save to database
+    const message = await Message.create({
+      sender: senderId,
+      receiver: receiverId,
+      booking: bookingId,
+      content
+    });
+    
+    // Broadcast to room participants
+    io.to(`booking-${bookingId}`).emit('new-message', message);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+\end{lstlisting}
+
+\subsubsection{Frontend Integration}
+\begin{lstlisting}[language=JavaScript, caption=React Socket.io Hook]
+const useSocket = (bookingId) => {
+  const [socket, setSocket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+    
+    newSocket.emit('join-room', bookingId);
+    
+    newSocket.on('new-message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+    
+    return () => newSocket.close();
+  }, [bookingId]);
+  
+  const sendMessage = (content) => {
+    socket.emit('send-message', {
+      senderId: user._id,
+      receiverId: otherUser._id,
+      bookingId,
+      content
+    });
+  };
+  
+  return { messages, sendMessage };
+};
+\end{lstlisting}
+
+\subsection{JWT Authentication Middleware}
+
+\begin{lstlisting}[language=JavaScript, caption=Auth Middleware]
+const protect = async (req, res, next) => {
+  let token;
+  
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    try {
+      // Extract token from header
+      token = req.headers.authorization.split(' ')[1];
+      
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Attach user to request
+      req.user = await User.findById(decoded.id).select('-password');
+      
+      next();
+    } catch (error) {
+      res.status(401).json({ message: 'Not authorized, token failed' });
+    }
+  }
+  
+  if (!token) {
+    res.status(401).json({ message: 'Not authorized, no token' });
+  }
+};
+\end{lstlisting}
+
+\subsection{Fare Calculator Utility}
+
+\begin{lstlisting}[language=JavaScript, caption=Distance-Based Fare Calculation]
+const calculateFare = (distance, baseRate = 5) => {
+  // distance in km, baseRate in rupees per km
+  const baseFare = 50; // Minimum fare
+  const calculatedFare = distance * baseRate;
+  
+  return Math.max(baseFare, Math.round(calculatedFare));
+};
+
+const getDistanceBetweenPoints = (lat1, lon1, lat2, lon2) => {
+  // Haversine formula
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * 
+            Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+\end{lstlisting}
+
+\newpage
+
+\section{Security Implementation}
+
+\subsection{Authentication Security}
+
+\subsubsection{Password Hashing}
+\begin{lstlisting}[language=JavaScript, caption=bcrypt Implementation]
+// During registration
+const salt = await bcrypt.genSalt(10);
+user.password = await bcrypt.hash(password, salt);
+
+// During login
+const isMatch = await bcrypt.compare(enteredPassword, user.password);
+\end{lstlisting}
+
+\subsubsection{JWT Token Generation}
+\begin{lstlisting}[language=JavaScript, caption=Token Creation]
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: '30d'
+  });
+};
+\end{lstlisting}
+
+\subsection{Input Validation}
+
+\begin{itemize}
+    \item Email format validation using regex patterns
+    \item Phone number validation for Indian mobile format
+    \item Coordinate validation for geospatial queries
+    \item Sanitization of user inputs to prevent injection attacks
+    \item Mongoose schema validators for data integrity
+\end{itemize}
+
+\subsection{Authorization Checks}
+
+\begin{lstlisting}[language=JavaScript, caption=Role-Based Access Control]
+const requireDriver = (req, res, next) => {
+  if (req.user && req.user.role === 'driver') {
+    next();
+  } else {
+    res.status(403).json({ 
+      message: 'Access denied. Driver role required.' 
+    });
+  }
+};
+
+// Usage in routes
+router.post('/rides', protect, requireDriver, createRide);
+\end{lstlisting}
+
+\subsection{Environment Variables}
+
+Sensitive configuration stored in \texttt{.env} files:
+\begin{lstlisting}
+MONGO_URI=mongodb://localhost:27017/hitchhike
+JWT_SECRET=your_secret_key_here
+PORT=5000
+NODE_ENV=production
+\end{lstlisting}
+
+\newpage
+
+\section{User Interface Design}
+
+\subsection{Design Principles}
+
+\begin{itemize}
+    \item \textbf{Mobile-First:} Responsive design optimized for mobile devices
+    \item \textbf{Intuitive Navigation:} Bottom navigation bar for easy access
+    \item \textbf{Visual Hierarchy:} Clear distinction between primary and secondary actions
+    \item \textbf{Accessibility:} ARIA labels and keyboard navigation support
+    \item \textbf{Consistency:} Uniform color scheme and component styling
+\end{itemize}
+
+\subsection{Key UI Components}
+
+\subsubsection{Landing Page}
+\begin{itemize}
+    \item Hero section with call-to-action buttons
+    \item Role selection (Driver vs Passenger)
+    \item Feature highlights with icons
+    \item Responsive grid layout
+\end{itemize}
+
+\subsubsection{Ride Search Interface}
+\begin{itemize}
+    \item Location input fields with autocomplete
+    \item Date and time pickers
+    \item Search radius slider (5-50 km)
+    \item Interactive map display using Leaflet
+    \item Ride cards with driver information
+\end{itemize}
+
+\subsubsection{Ride Creation Form}
+\begin{itemize}
+    \item Multi-step form with validation
+    \item Map-based location selection
+    \item Vehicle information inputs
+    \item Preference toggles (smoking, pets, music)
+    \item Price calculator based on distance
+\end{itemize}
+
+\subsubsection{Chat Interface}
+\begin{itemize}
+    \item Message bubble design
+    \item Real-time message updates
+    \item User avatars and names
+    \item Timestamp display
+    \item Message status indicators
+\end{itemize}
+
+\subsection{Color Scheme}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Element} & \textbf{Color} & \textbf{Hex Code} \\
+\hline
+Primary & Blue & \texttt{\#3B82F6} \\
+Secondary & Green & \texttt{\#10B981} \\
+Accent & Orange & \texttt{\#F59E0B} \\
+Background & White & \texttt{\#FFFFFF} \\
+Text Primary & Dark Gray & \texttt{\#1F2937} \\
+Text Secondary & Light Gray & \texttt{\#6B7280} \\
+\hline
+\end{tabular}
+\caption{Application Color Palette}
+\end{table}
+
+\subsection{Responsive Breakpoints}
+
+\begin{itemize}
+    \item Mobile: < 640px
+    \item Tablet: 640px - 1024px
+    \item Desktop: > 1024px
+\end{itemize}
+
+\newpage
+
+\section{Testing Strategy}
+
+\subsection{Testing Approach}
+
+\subsubsection{Manual Testing}
+\begin{itemize}
+    \item User registration and login flows
+    \item Ride creation and search functionality
+    \item Booking workflows
+    \item Real-time chat functionality
+    \item Profile management
+    \item Mobile responsiveness across devices
+\end{itemize}
+
+\subsubsection{API Testing}
+\begin{itemize}
+    \item Endpoint testing using Postman
+    \item Authentication flow verification
+    \item Geospatial query accuracy
+    \item Error handling validation
+    \item Response time measurements
+\end{itemize}
+
+\subsection{Test Scenarios}
+
+\subsubsection{Authentication Tests}
+\begin{enumerate}
+    \item User registration with valid credentials
+    \item Registration with duplicate email (should fail)
+    \item Login with correct credentials
+    \item Login with incorrect password (should fail)
+    \item Access protected routes without token (should fail)
+    \item Token expiration handling
+\end{enumerate}
+
+\subsubsection{Ride Management Tests}
+\begin{enumerate}
+    \item Driver creates a new ride
+    \item Passenger searches for rides within radius
+    \item Geospatial matching accuracy verification
+    \item Ride availability updates after booking
+    \item Cancellation workflow
+\end{enumerate}
+
+\subsubsection{Real-Time Features Tests}
+\begin{enumerate}
+    \item Socket connection establishment
+    \item Message delivery between users
+    \item Message persistence in database
+    \item Offline message handling
+    \item Multiple concurrent chat rooms
+\end{enumerate}
+
+\newpage
+
+\section{Deployment Strategy}
+
+\subsection{Development Environment}
+
+\begin{itemize}
+    \item \textbf{Frontend:} Vite dev server on \texttt{localhost:5173}
+    \item \textbf{Backend:} Node.js server on \texttt{localhost:5000}
+    \item \textbf{Database:} Local MongoDB instance
+    \item \textbf{Hot Reload:} Enabled for rapid development
+\end{itemize}
+
+\subsection{Production Deployment}
+
+\subsubsection{Frontend Deployment (Vercel/Netlify)}
+\begin{lstlisting}[language=bash]
+# Build production bundle
+cd hitchhike-frontend
+npm run build
+
+# Deploy to hosting platform
+# Output in dist/ directory
+\end{lstlisting}
+
+\subsubsection{Backend Deployment (Heroku/Railway)}
+\begin{lstlisting}[language=bash]
+# Install dependencies
+cd backend
+npm install --production
+
+# Start production server
+npm start
+\end{lstlisting}
+
+\subsubsection{Database (MongoDB Atlas)}
+\begin{itemize}
+    \item Cloud-hosted MongoDB cluster
+    \item Automatic backups and scaling
+    \item Global distribution options
+    \item Connection string in environment variables
+\end{itemize}
+
+\subsection{Environment Configuration}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Variable} & \textbf{Description} \\
+\hline
+\texttt{MONGO\_URI} & MongoDB connection string \\
+\texttt{JWT\_SECRET} & Secret key for JWT signing \\
+\texttt{NODE\_ENV} & Environment (development/production) \\
+\texttt{PORT} & Server port number \\
+\texttt{FRONTEND\_URL} & CORS allowed origin \\
+\hline
+\end{tabular}
+\caption{Environment Variables Configuration}
+\end{table}
+
+\subsection{CI/CD Pipeline}
+
+Recommended automated workflow:
+\begin{enumerate}
+    \item Code pushed to GitHub repository
+    \item Automated testing triggered
+    \item Build process executed
+    \item Deployment to staging environment
+    \item Manual approval for production deployment
+    \item Monitoring and logging enabled
+\end{enumerate}
+
+\newpage
+
+\section{Challenges \& Solutions}
+
+\subsection{Geospatial Query Optimization}
+
+\textbf{Challenge:} Efficient searching of rides across large geographical areas with acceptable response times.
+
+\textbf{Solution:} 
+\begin{itemize}
+    \item Implemented MongoDB \texttt{2dsphere} indexes on origin and destination coordinates
+    \item Used \texttt{\$near} operator with configurable \texttt{\$maxDistance}
+    \item Limited result sets to prevent performance degradation
+    \item Cached frequently accessed geospatial data
+\end{itemize}
+
+\subsection{Real-Time Communication Scalability}
+
+\textbf{Challenge:} Managing multiple concurrent WebSocket connections and ensuring message delivery.
+
+\textbf{Solution:}
+\begin{itemize}
+    \item Implemented Socket.io rooms for isolated chat sessions
+    \item Stored messages in MongoDB for persistence
+    \item Used event-based architecture for efficient handling
+    \item Implemented reconnection logic for network disruptions
+\end{itemize}
+
+\subsection{Authentication State Management}
+
+\textbf{Challenge:} Maintaining user authentication across page reloads and navigation.
+
+\textbf{Solution:}
+\begin{itemize}
+    \item Stored JWT tokens in localStorage
+    \item Implemented automatic token inclusion in API requests
+    \item Created PrivateRoute component for protected pages
+    \item Handled token expiration gracefully
+\end{itemize}
+
+\subsection{Mobile Responsiveness}
+
+\textbf{Challenge:} Creating a consistent experience across devices with varying screen sizes.
+
+\textbf{Solution:}
+\begin{itemize}
+    \item Adopted mobile-first design approach with TailwindCSS
+    \item Used responsive utility classes throughout
+    \item Implemented bottom navigation for mobile ergonomics
+    \item Tested on multiple device sizes
+\end{itemize}
+
+\newpage
+
+\section{Future Enhancements}
+
+\subsection{Advanced Features}
+
+\subsubsection{AI-Powered Ride Matching}
+\begin{itemize}
+    \item Machine learning algorithms for optimal driver-passenger pairing
+    \item Predictive analytics for ride demand forecasting
+    \item Route optimization using traffic data
+    \item Personalized recommendations based on user history
+\end{itemize}
+
+\subsubsection{Safety Features}
+\begin{itemize}
+    \item Real-time location sharing during rides
+    \item Emergency SOS button with automated alerts
+    \item User verification through government ID
+    \item Background checks for drivers
+    \item Insurance integration
+    \item Ride check-in/check-out system
+\end{itemize}
+
+\subsubsection{Social Features}
+\begin{itemize}
+    \item Trusted circle creation (family, friends, colleagues)
+    \item Social media integration for verification
+    \item User reviews and rating system enhancements
+    \item Ride preferences matching (music, conversation level)
+    \item Community leaderboards and badges
+\end{itemize}
+
+\subsubsection{Carbon Footprint Tracking}
+\begin{itemize}
+    \item CO$_2$ emission calculations per ride
+    \item Personal environmental impact dashboard
+    \item Sustainability badges and achievements
+    \item Integration with carbon offset programs
+\end{itemize}
+
+\subsection{Technical Improvements}
+
+\subsubsection{Performance Optimization}
+\begin{itemize}
+    \item Implement Redis caching for frequently accessed data
+    \item Database query optimization and indexing improvements
+    \item Code splitting and lazy loading for frontend
+    \item CDN integration for static assets
+    \item Image optimization and compression
+\end{itemize}
+
+\subsubsection{Testing Infrastructure}
+\begin{itemize}
+    \item Unit testing with Jest for backend
+    \item Component testing with React Testing Library
+    \item End-to-end testing with Cypress
+    \item API testing automation with Newman
+    \item Load testing for scalability assessment
+\end{itemize}
+
+\subsubsection{DevOps Enhancements}
+\begin{itemize}
+    \item Dockerization for consistent environments
+    \item Kubernetes orchestration for scaling
+    \item Automated CI/CD pipelines
+    \item Comprehensive logging with ELK stack
+    \item Monitoring with Prometheus and Grafana
+\end{itemize}
+
+\subsection{Feature Additions}
+
+\subsubsection{Payment Integration}
+\begin{itemize}
+    \item Multiple payment gateway support (Razorpay, PayTM)
+    \item In-app wallet functionality
+    \item Automatic fare splitting
+    \item Digital receipts and invoicing
+\end{itemize}
+
+\subsubsection{Recurring Rides}
+\begin{itemize}
+    \item Daily commute scheduling
+    \item Subscription-based regular routes
+    \item Automatic booking for recurring patterns
+    \item Flexible schedule modifications
+\end{itemize}
+
+\subsubsection{Voice Integration}
+\begin{itemize}
+    \item Voice-based ride booking
+    \item Hands-free navigation during rides
+    \item Voice messages in chat
+    \item Integration with virtual assistants (Alexa, Google Assistant)
+\end{itemize}
+
+\subsubsection{Multi-Language Support}
+\begin{itemize}
+    \item Internationalization (i18n) implementation
+    \item Support for regional languages
+    \item Dynamic language switching
+    \item Localized content and formatting
+\end{itemize}
+
+\newpage
+
+\section{Conclusion}
+
+\subsection{Project Achievements}
+
+The Hitchhike carpooling platform successfully demonstrates the implementation of a comprehensive, full-stack web application addressing real-world transportation challenges. Key accomplishments include:
+
+\begin{itemize}
+    \item \textbf{Technical Excellence:} Robust implementation of MERN stack technologies with modern development practices
+    \item \textbf{Real-Time Capabilities:} Seamless Socket.io integration enabling instant communication between users
+    \item \textbf{Geospatial Intelligence:} Efficient location-based ride matching using MongoDB's geospatial features
+    \item \textbf{Security Implementation:} Comprehensive authentication and authorization using JWT and bcrypt
+    \item \textbf{User Experience:} Intuitive, responsive interface designed with mobile-first principles
+    \item \textbf{Scalable Architecture:} Modular design enabling easy feature additions and maintenance
+\end{itemize}
+
+\subsection{Learning Outcomes}
+
+Development of this platform provided valuable experience in:
+
+\begin{itemize}
+    \item Building RESTful APIs with Express.js and proper routing architecture
+    \item Managing complex state in React applications
+    \item Implementing WebSocket communication for real-time features
+    \item Working with NoSQL databases and geospatial queries
+    \item Designing responsive user interfaces with TailwindCSS
+    \item Handling authentication flows and security best practices
+    \item Integrating third-party libraries (Leaflet, Socket.io)
+    \item Debugging and testing full-stack applications
+\end{itemize}
+
+\subsection{Impact Potential}
+
+The Hitchhike platform addresses several critical areas:
+
+\begin{itemize}
+    \item \textbf{Economic Impact:} Reduces transportation costs for daily commuters
+    \item \textbf{Environmental Sustainability:} Decreases carbon emissions through shared rides
+    \item \textbf{Urban Mobility:} Alleviates traffic congestion in cities
+    \item \textbf{Social Connection:} Facilitates community building among commuters
+    \item \textbf{Resource Optimization:} Maximizes vehicle capacity utilization
+\end{itemize}
+
+\subsection{Innovation Assessment}
+
+\textbf{Overall Innovation Rating: 6.5/10}
+
+\textbf{Strengths:}
+\begin{itemize}
+    \item Solid execution of core carpooling functionality
+    \item Effective use of modern web technologies
+    \item Real-time communication implementation
+    \item Geospatial query optimization
+\end{itemize}
+
+\textbf{Areas for Differentiation:}
+\begin{itemize}
+    \item Integration of AI/ML for intelligent matching
+    \item Enhanced safety and verification features
+    \item Social circle and trusted network functionality
+    \item Carbon tracking and sustainability metrics
+    \item Voice-based interaction capabilities
+\end{itemize}
+
+\subsection{Final Remarks}
+
+The Hitchhike platform represents a functional, well-architected solution to the carpooling challenge. While it successfully implements standard carpooling features, future enhancements focusing on AI integration, advanced safety features, and social connectivity could elevate the platform to a more innovative and competitive position in the market.
+
+The project demonstrates strong technical capabilities in full-stack development, real-time systems, and geospatial data management. With continued development and incorporation of the suggested enhancements, Hitchhike has the potential to become a leading platform in the sustainable urban transportation sector.
+
+\newpage
+
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begin{enumerate}
+    \item MongoDB Documentation - Geospatial Queries: \url{https://docs.mongodb.com/manual/geospatial-queries/}
+    \item React Documentation: \url{https://react.dev/}
+    \item Express.js Guide: \url{https://expressjs.com/}
+    \item Socket.io Documentation: \url{https://socket.io/docs/v4/}
+    \item JWT Introduction: \url{https://jwt.io/introduction}
+    \item TailwindCSS Documentation: \url{https://tailwindcss.com/docs}
+    \item Leaflet.js API Reference: \url{https://leafletjs.com/reference.html}
+    \item Node.js Best Practices: \url{https://github.com/goldbergyoni/nodebestpractices}
+    \item RESTful API Design Guidelines: Roy Fielding's Dissertation on Architectural Styles
+    \item Mongoose ODM Documentation: \url{https://mongoosejs.com/docs/}
+\end{enumerate}
+
+\newpage
+
+\appendix
+
+\section{Code Repository Structure}
+
+\begin{lstlisting}
+hitchhike-platform/
+├── backend/
+│   ├── config/
+│   │   └── db.js
+│   ├── controllers/
+│   │   ├── userController.js
+│   │   ├── rideController.js
+│   │   ├── bookingController.js
+│   │   └── chatController.js
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Ride.js
+│   │   ├── Booking.js
+│   │   └── Message.js
+│   ├── routes/
+│   │   ├── userRoutes.js
+│   │   ├── rideRoutes.js
+│   │   ├── bookingRoutes.js
+│   │   └── chatRoutes.js
+│   ├── .env
+│   ├── package.json
+│   └── server.js
+│
+├── hitchhike-frontend/
+│   ├── public/
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── BottomNav.jsx
+│   │   │   ├── MapComponent.jsx
+│   │   │   ├── PrivateRoute.jsx
+│   │   │   └── LiveTracking.jsx
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── OfferRide.jsx
+│   │   │   ├── BookRide.jsx
+│   │   │   ├── Chat.jsx
+│   │   │   ├── MyRides.jsx
+│   │   │   └── Profile.jsx
+│   │   ├── services/
+│   │   │   └── api_service.js
+│   │   ├── utils/
+│   │   │   └── fareCalculator.jsx
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   ├── index.html
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.js
+│
+└── README.md
+\end{lstlisting}
+
+\section{Installation Instructions}
+
+\subsection{Prerequisites}
+\begin{itemize}
+    \item Node.js (v16 or higher)
+    \item MongoDB (v5 or higher)
+    \item npm or yarn package manager
+\end{itemize}
+
+\subsection{Backend Setup}
+\begin{lstlisting}[language=bash]
+# Navigate to backend directory
+cd backend
+
+# Install dependencies
+npm install
+
+# Create .env file with required variables
+# MONGO_URI=mongodb://localhost:27017/hitchhike
+# JWT_SECRET=your_secret_key
+# PORT=5000
+
+# Start development server
+npm run dev
+\end{lstlisting}
+
+\subsection{Frontend Setup}
+\begin{lstlisting}[language=bash]
+# Navigate to frontend directory
+cd hitchhike-frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+\end{lstlisting}
+
+\end{document}

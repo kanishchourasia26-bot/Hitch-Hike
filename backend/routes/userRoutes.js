@@ -6,7 +6,8 @@ const {
   resendOTP,
   registerUser, 
   loginUser, 
-  getMe, 
+  getMe,
+  getUserById,
   verifyDocuments, 
   updateProfile,
   verifyUser,
@@ -42,6 +43,9 @@ router.post('/login', loginUser);
 
 // @route   GET /api/users/me
 router.get('/me', protect, getMe);
+
+// @route   GET /api/users/:userId
+router.get('/:userId', getUserById);
 
 // @route   POST /api/users/verify
 router.post('/verify', protect, verifyDocuments);

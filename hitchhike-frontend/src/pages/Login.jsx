@@ -5,7 +5,7 @@ import { X, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import api from '../services/api_service';
 
 const Login = () => {
-  const [formData, setFormData] = useState({ phone: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -150,82 +150,68 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-6 bg-gradient-to-br from-purple-50 via-white to-orange-50 py-10">
-      <div className="max-w-md mx-auto w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🏍️</div>
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Login to continue your ride-sharing journey
-          </p>
+    <div className="min-h-screen flex flex-col justify-center px-4 bg-gradient-to-br from-purple-50 via-white to-orange-50 py-4">
+      <div className="mb-4 text-center">
+        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-orange-500">
+          Hitchhike
+        </h1>
+        <p className="text-gray-600 mt-1 font-semibold">Welcome back!</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto w-full">
+        <div>
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={formData.email}
+            className="w-full p-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white p-8 rounded-2xl shadow-lg">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mobile Number
-            </label>
-            <input
-              type="tel"
-              placeholder="Enter your mobile number"
-              value={formData.phone}
-              className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={formData.password}
-                className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition pr-12"
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              className="text-sm text-purple-600 font-semibold hover:text-purple-700 transition"
-            >
-              Forgot Password?
-            </button>
-          </div>
-          
-          <button 
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={formData.password}
+            className="w-full p-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition pr-12"
+            onChange={(e) => setFormData({...formData, password: e.target.value})}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
-            {loading ? 'Logging in...' : 'LOGIN'}
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
-        </form>
+        </div>
 
-        <p className="text-center mt-6 text-sm text-gray-600">
-          Don't have an account?
-          <Link to="/register" className="text-purple-600 font-bold ml-1 hover:text-purple-700 transition">
-            Register here
-          </Link>
-        </p>
-      </div>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowForgotPassword(true)}
+            className="text-sm text-orange-500 font-bold hover:underline"
+          >
+            Forgot Password?
+          </button>
+        </div>
+        
+        <button 
+          disabled={loading}
+          className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600 text-white font-black rounded-xl shadow-lg shadow-purple-200 hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Processing...' : 'LOGIN'}
+        </button>
+      </form>
+
+      <p className="text-center mt-4 text-sm text-gray-600">
+        Don't have an account?
+        <Link to="/register" className="text-orange-500 font-bold ml-1 hover:underline">
+          Register here
+        </Link>
+      </p>
 
       {/* Forgot Password Modal */}
       <AnimatePresence>
@@ -251,7 +237,7 @@ const Login = () => {
                 {/* Close Button */}
                 <button
                   onClick={() => setShowForgotPassword(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
                 >
                   <X size={24} />
                 </button>
@@ -260,8 +246,8 @@ const Login = () => {
                 {forgotStep === 1 && (
                   <form onSubmit={handleSendResetOTP} className="space-y-6">
                     <div className="text-center mb-6">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Lock size={32} className="text-purple-600" />
+                      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Lock size={32} className="text-orange-500" />
                       </div>
                       <h2 className="text-2xl font-black text-gray-900">Forgot Password?</h2>
                       <p className="text-sm text-gray-500 mt-2">
@@ -270,15 +256,12 @@ const Login = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address
-                      </label>
                       <input
                         type="email"
                         placeholder="Enter your email"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
-                        className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                        className="w-full p-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
                         required
                       />
                     </div>
@@ -286,7 +269,7 @@ const Login = () => {
                     <button
                       type="submit"
                       disabled={forgotLoading}
-                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600 text-white font-black rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                     >
                       {forgotLoading ? 'Sending...' : 'Send OTP'}
                     </button>
@@ -297,64 +280,49 @@ const Login = () => {
                 {forgotStep === 2 && (
                   <form onSubmit={handleVerifyOTPAndReset} className="space-y-6">
                     <div className="text-center mb-6">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mail size={32} className="text-purple-600" />
+                      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Mail size={32} className="text-orange-500" />
                       </div>
                       <h2 className="text-2xl font-black text-gray-900">Enter OTP</h2>
                       <p className="text-sm text-gray-500 mt-2">
-                        We sent a code to <span className="font-semibold text-purple-600">{forgotEmail}</span>
+                        We sent a code to {forgotEmail}
                       </p>
                     </div>
 
                     {/* OTP Input */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                        6-Digit Code
-                      </label>
-                      <div className="flex gap-2 justify-center mb-6">
-                        {otp.map((digit, index) => (
-                          <input
-                            key={index}
-                            ref={(el) => (otpInputRefs.current[index] = el)}
-                            type="text"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => handleOTPChange(index, e.target.value)}
-                            onKeyDown={(e) => handleOTPKeyDown(index, e)}
-                            className="w-12 h-12 text-center text-xl font-black border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                          />
-                        ))}
-                      </div>
+                    <div className="flex gap-2 justify-center mb-6">
+                      {otp.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          type="text"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOTPChange(index, e.target.value)}
+                          onKeyDown={(e) => handleOTPKeyDown(index, e)}
+                          className="w-12 h-12 text-center text-xl font-black border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                        />
+                      ))}
                     </div>
 
                     {/* New Password Fields */}
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          New Password
-                        </label>
-                        <input
-                          type="password"
-                          placeholder="Min 6 characters"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Confirm Password
-                        </label>
-                        <input
-                          type="password"
-                          placeholder="Re-enter new password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                          required
-                        />
-                      </div>
+                      <input
+                        type="password"
+                        placeholder="New Password (min 6 characters)"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full p-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                        required
+                      />
+                      <input
+                        type="password"
+                        placeholder="Confirm New Password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full p-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                        required
+                      />
                     </div>
 
                     {/* Resend OTP */}
@@ -363,7 +331,7 @@ const Login = () => {
                         type="button"
                         onClick={handleResendOTP}
                         disabled={resendTimer > 0}
-                        className="text-sm text-purple-600 font-semibold hover:text-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-sm text-orange-500 font-bold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
                       </button>
@@ -372,7 +340,7 @@ const Login = () => {
                     <button
                       type="submit"
                       disabled={forgotLoading}
-                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600 text-white font-black rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                     >
                       {forgotLoading ? 'Resetting...' : 'Reset Password'}
                     </button>

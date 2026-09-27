@@ -14,7 +14,6 @@ const Register = () => {
     email: '',
     phone: '', 
     password: '', 
-    role: 'passenger',
     age: '',
     gender: '',
     vehicleNumber: ''
@@ -101,7 +100,12 @@ const Register = () => {
     }
 
     try {
-      // Just verify OTP exists, then move to step 3
+      // Verify OTP with backend
+      const response = await api.post('/users/verify-otp-only', {
+        email: formData.email,
+        otp: otpCode
+      });
+      
       setSuccess('OTP verified! Complete your profile.');
       setStep(3);
     } catch (err) {
@@ -156,7 +160,9 @@ const Register = () => {
         name: formData.name,
         phone: formData.phone,
         password: formData.password,
-        role: formData.role,
+        age: formData.age,
+        gender: formData.gender,
+        vehicleNumber: formData.vehicleNumber || undefined
       });
       
       // Save token and user data
@@ -177,12 +183,12 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-6 bg-gradient-to-br from-purple-50 via-white to-orange-50 py-10">
+    <div className="min-h-screen flex flex-col justify-center px-4 bg-gradient-to-br from-purple-50 via-white to-orange-50 py-4">
       <div className="max-w-md mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🏍️</div>
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+        <div className="text-center mb-4">
+          <div className="text-4xl mb-3">🏍️</div>
+          <h1 className="text-2xl font-extrabold text-gray-900 mb-1">
             {step === 1 && 'Create Account'}
             {step === 2 && 'Verify Email'}
             {step === 3 && 'Complete Profile'}
@@ -195,7 +201,7 @@ const Register = () => {
         </div>
 
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center mb-8 gap-2">
+        <div className="flex items-center justify-center mb-4 gap-2">
           <div className={`h-2 w-16 rounded-full transition-all ${step >= 1 ? 'bg-gradient-to-r from-purple-500 to-orange-500' : 'bg-gray-200'}`}></div>
           <div className={`h-2 w-16 rounded-full transition-all ${step >= 2 ? 'bg-gradient-to-r from-purple-500 to-orange-500' : 'bg-gray-200'}`}></div>
           <div className={`h-2 w-16 rounded-full transition-all ${step >= 3 ? 'bg-gradient-to-r from-purple-500 to-orange-500' : 'bg-gray-200'}`}></div>
@@ -418,34 +424,13 @@ const Register = () => {
                 </select>
               </div>
 
-              <select
-                className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-bold text-gray-700"
-                value={formData.role}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    role: e.target.value,
-                    vehicleNumber: e.target.value === 'passenger' ? '' : formData.vehicleNumber,
-                  });
-                }}
-              >
-                <option value="passenger">Register as Passenger</option>
-                <option value="rider">Register as Rider (Vehicle Owner)</option>
-              </select>
-
-              {formData.role === 'rider' && (
-                <motion.input
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  type="text"
-                  placeholder="Vehicle Number (e.g. MH01 AB 1234)"
-                  required
-                  className="w-full p-4 rounded-xl border border-orange-300 bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-orange-400"
-                  value={formData.vehicleNumber}
-                  onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
-                />
-              )}
+              <input
+                type="text"
+                placeholder="Vehicle Number (Optional, e.g. MH01 AB 1234)"
+                className="w-full p-4 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={formData.vehicleNumber}
+                onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
+              />
 
               <button
                 type="submit"
