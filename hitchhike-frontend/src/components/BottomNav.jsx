@@ -12,7 +12,7 @@ const TABS = [
 ///
   { to: '/profile', label: 'Profile', icon: User },
 ];
-////////
+////////////
 const BottomNav = () => {
   // Don't render if not logged in
   const token = localStorage.getItem('token');
