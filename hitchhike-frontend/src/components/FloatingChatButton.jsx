@@ -140,7 +140,7 @@ const FloatingChatButton = () => {
                         )}
                       </div>
 
-                      {/* Content.......... */}
+                      {/* Content....../////////.... */}
                       <div className="flex-1 overflow-hidden">
                         <div className="flex items-center justify-between mb-1">
                           <h4 className="font-bold text-sm text-gray-900 truncate">
