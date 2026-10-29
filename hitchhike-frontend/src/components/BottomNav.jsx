@@ -8,7 +8,7 @@ const TABS = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/book', label: 'Book', icon: MapPin },
   { to: '/offer', label: 'Offer', icon: Bike },
-  // NAYA: My Rides ka tab yahan add kiya hai
+  // NAYA: My Rides ka t///////ab yahan add kiya hai
 ///
   { to: '/profile', label: 'Profile', icon: User },
 ];
